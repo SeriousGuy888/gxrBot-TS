@@ -17,7 +17,8 @@ client.once("ready", async () => {
 client.on("interactionCreate", async (interaction: Interaction) => {
   if(!interaction.isCommand())
     return
-  interaction.deferReply()
+
+  await interaction.deferReply()
   commands[interaction.commandName].execute(interaction, client)
 })
 
