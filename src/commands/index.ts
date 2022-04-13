@@ -1,2 +1,2 @@
 export * as ping from "./Ping"
-export * as help from "./Help"
+export * as test from "./Test"

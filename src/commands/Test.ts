@@ -1,16 +1,18 @@
 import { SlashCommandBuilder } from "@discordjs/builders"
 import { Client, CommandInteraction } from "discord.js"
+import { createDocument } from "../firebase"
 
 export const data = new SlashCommandBuilder()
-  .setName("help")
-  .setDescription("help")
+  .setName("test")
+  .setDescription("test")
   .addStringOption(option => {
     return option
-      .setName("aaa")
+      .setName("text")
       .setDescription("aaaa")
       .setRequired(true)
   })
 
 export async function execute(interaction: CommandInteraction, client: Client) {
-  interaction.reply("help")
+  await createDocument(interaction.user.id, interaction.options.getString("text")!)
+  await interaction.followUp({ content: "ok", ephemeral: true })
 }
