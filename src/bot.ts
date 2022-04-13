@@ -17,26 +17,26 @@ client.once("ready", async () => {
 })
 
 const deployCommands = () => {
-  const commands = []
-  for(const module of Object.values<any>(commandModules))
-    commands.push(module.data.toJSON())
+  const commandsToDeploy = []
+  for(const module of Object.values(commandModules))
+    commandsToDeploy.push(module.data.toJSON())
 
   const rest = new REST({ version: "9" }).setToken(process.env.BOT_TOKEN as string);
 
   (async () => {
     try {
       console.log("Deploying slash commands...")
-      
+
       await rest.put(
         Routes.applicationGuildCommands(
           process.env.CLIENT_ID as string,
           process.env.GUILD_ID as string,
         ),
-        { body: commands }
+        { body: commandsToDeploy }
       )
       await rest.put(
         Routes.applicationCommands(process.env.CLIENT_ID as string),
-        { body: commands }
+        { body: commandsToDeploy }
       )
 
       console.log("Successfully deployed slash commands.")
