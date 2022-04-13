@@ -1,5 +1,4 @@
 import { SlashCommandBuilder } from "@discordjs/builders"
-import { APIMessage } from "discord-api-types/v10"
 import { CommandInteraction, MessageEmbed } from "discord.js"
 import prettyMs from "pretty-ms"
 import { client } from "../bot"
