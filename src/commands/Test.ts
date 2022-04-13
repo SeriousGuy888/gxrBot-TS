@@ -12,7 +12,7 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
   })
 
-export async function execute(interaction: CommandInteraction, client: Client) {
+export async function execute(interaction: CommandInteraction) {
   await createDocument(interaction.user.id, interaction.options.getString("text")!)
   await interaction.followUp({ content: "ok", ephemeral: true })
 }
