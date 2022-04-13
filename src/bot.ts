@@ -53,6 +53,7 @@ client.on("interactionCreate", async (interaction: Interaction) => {
   if(!interaction.isCommand())
     return
   
+  interaction.deferReply()
   commands[interaction.commandName].execute(interaction, client)
 })
 
