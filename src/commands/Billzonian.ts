@@ -31,18 +31,14 @@ export async function execute(interaction: CommandInteraction) {
   }
   
   const dictionaryData = await csv().fromString(response.data)
-  const itemsPerPage = 4
+  const itemsPerPage = 3
   const searchTerm = interaction.options.getString("word")?.toLowerCase()
   let maxPages = Math.ceil(dictionaryData.length / itemsPerPage)
   let page = 1
   let msg = (await interaction.followUp({ content: "Loading dictionary..." })) as Message
 
   const displayDictionary = async (targetMessage: Message, disableButtons: boolean) => {
-    let searchResults = dictionaryData.filter(e => (
-      e.word.toLowerCase().includes(searchTerm)
-      || e.translation.toLowerCase().includes(searchTerm)
-      || e.alt_forms.toLowerCase().includes(searchTerm)
-    ))
+    let searchResults = searchDictionaryData(dictionaryData, searchTerm)
 
     maxPages = Math.ceil(searchResults.length / itemsPerPage)
 
@@ -64,45 +60,33 @@ export async function execute(interaction: CommandInteraction) {
 
 
     if(maxPages === 0) {
-      // const allWords = dictionaryData.map(e => e.word)
-      // let allSimilarities = didYouMean(searchTerm, allWords).map(e => e.target)
-      // allSimilarities = [...new Set(allSimilarities)] // remove duplicates from function return
-      // const topSimilarities = []
-
-      // for(let i = 0; i < 8; i++) {
-      //   topSimilarities.push(allSimilarities[i])
-      // }
-
-      // const wordSuggestionsStr = "```\n" + topSimilarities.map(e => `- ${e}`).join("\n") + "```"
-
-
       responseEmbed
         .addField("No Words Found :(", [
           "Try double checking your search term.",
           "Shu attempt tu reakratise thy search term.",
         ].join("\n"))
         .addField("\u200b", "\u200b")
-        // .addField("Did you mean one of these words?", wordSuggestionsStr.slice(0, 1024))
-    } else {
-      searchResults.forEach(e => {
-        if(e?.word?.toLowerCase() === searchTerm) {
-          e.isExactMatch = true
-          searchResults = moveArrayItem(searchResults, searchResults.indexOf(e), 0)
-        }
+        // todo: implement similar word matching
+
+      return targetMessage.edit({
+        content: null,
+        embeds: [responseEmbed],
       })
+    }
 
-
-      for(let i = 0; i < itemsPerPage; i++) {
-        const entryIndex = i + ((page - 1) * itemsPerPage)
-        const wordData = searchResults[entryIndex]
-        if(!wordData)
-          break
-
-        addWordToEmbed(wordData, responseEmbed)
-        
-        if((i + 1) % 2 === 0)
-          responseEmbed.addField("\u200b", "\u200b")
+    
+    searchResults.forEach(e => {
+      if(e?.word?.toLowerCase() === searchTerm) {
+        e.isExactMatch = true
+        searchResults = moveArrayItem(searchResults, searchResults.indexOf(e), 0)
       }
+    })
+
+    for(let i = 0; i < Math.min(itemsPerPage, searchResults.length); i++) {
+      const entryIndex = i + ((page - 1) * itemsPerPage)
+      const wordData = searchResults[entryIndex]
+    
+      addWordToEmbed(wordData, responseEmbed)
     }
     responseEmbed.addField("\u200b", "\u200b")
 
@@ -213,6 +197,14 @@ export async function execute(interaction: CommandInteraction) {
 }
 
 
+const searchDictionaryData = (dictionaryData: any[], searchTerm: string | undefined) => {
+  return dictionaryData.filter(e => (
+    e.word.toLowerCase().includes(searchTerm)
+    || e.translation.toLowerCase().includes(searchTerm)
+    || e.alt_forms.toLowerCase().includes(searchTerm)
+  ))
+}
+
 const addWordToEmbed = (wordData: any, embed: MessageEmbed) => {
   const ipaReadings = wordData.ipa.split("|")
   const alts = wordData.alt_forms.split("|")
@@ -228,7 +220,7 @@ const addWordToEmbed = (wordData: any, embed: MessageEmbed) => {
   }
 
   embed.addField(
-    `${wordData.word && "**" + wordData.word + "**"} \`${wordData.pos}\` ${wordData.isExactMatch ? "*(⭐ Exact Match)*" : ""}`,
+    `${wordData.word && "**" + wordData.word + "**"} \`${wordData.pos}\`${wordData.isExactMatch ? " ⭐" : ""}`,
     [
       ipaReadingsString,
       wordData.alt_forms && `\`Alt:\` ${alts.join(", ")}`,
