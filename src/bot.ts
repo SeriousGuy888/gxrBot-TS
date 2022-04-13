@@ -1,7 +1,7 @@
 import "./config"
 import { Client, Intents, Interaction } from "discord.js"
 import deployCommands from "./deployCommands"
-import * as commandModules from "./commands/"
+import * as commandModules from "./commands/_CommandList"
 const commands = Object(commandModules)
 
 export const client = new Client({ intents: new Intents(32767) })

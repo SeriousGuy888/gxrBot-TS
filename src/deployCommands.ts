@@ -1,6 +1,6 @@
 import { REST } from "@discordjs/rest"
 import { Routes } from "discord-api-types/v10"
-import * as commandModules from "./commands"
+import * as commandModules from "./commands/_CommandList"
 
 export default async function() {
   const commandsToDeploy = []
