@@ -9,19 +9,20 @@ import {
 } from "discord.js"
 import axios from "axios"
 import csv from "csvtojson"
+import { Command } from "../interfaces"
 
 const repoUrl = "https://github.com/SeriousGuy888/Billzonian"
 const dictionaryUrl = "https://seriousguy888.github.io/Billzonian/vocabulary.csv"
 
 
-export const data = new SlashCommandBuilder()
+const data = new SlashCommandBuilder()
   .setName("billzonian")
   .setDescription("Look up a word in the Billzonian dictionary")
   .addStringOption(option => option
     .setName("word")
     .setDescription("Search term - Billzonian or English word"))
 
-export async function execute(interaction: CommandInteraction) {
+async function execute(interaction: CommandInteraction) {
   let response
   try {
     response = await axios.get(dictionaryUrl)
@@ -265,3 +266,5 @@ const moveArrayItem = (array: any[], fromIndex: number, toIndex: number) => {
   arr.splice(toIndex, 0, ...arr.splice(fromIndex, 1))
   return arr
 }
+
+export const Billzonian = { data, execute } as Command

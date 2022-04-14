@@ -1,13 +1,14 @@
 import { SlashCommandBuilder } from "@discordjs/builders"
 import { CommandInteraction, MessageEmbed } from "discord.js"
 import prettyMs from "pretty-ms"
+import { Command } from "src/interfaces"
 import { client } from "../bot"
 
-export const data = new SlashCommandBuilder()
+const data = new SlashCommandBuilder()
   .setName("ping")
   .setDescription("Returns bot information")
 
-export async function execute(interaction: CommandInteraction) {
+async function execute(interaction: CommandInteraction) {
   const age = prettyMs(Date.now() - (client.user?.createdTimestamp ?? 0), {
     verbose: true,
     unitCount: 2,
@@ -23,3 +24,5 @@ export async function execute(interaction: CommandInteraction) {
 
   await interaction.followUp({ embeds: [pingEmb] })
 }
+
+export const Ping = { data, execute } as Command

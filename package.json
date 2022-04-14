@@ -1,4 +1,8 @@
 {
+  "name": "gxrbot-ts",
+  "version": "1.0.0",
+  "description": "gxrBot but rewritten in typescript",
+  "main": "src/bot.ts",
   "dependencies": {
     "@discordjs/builders": "^0.12.0",
     "@discordjs/rest": "^0.3.0",

@@ -1,8 +1,7 @@
 import "./config"
-import { Client, Intents, Interaction } from "discord.js"
+import { Intents, Interaction } from "discord.js"
+import Client from "./ExtendedClient"
 import deployCommands from "./deployCommands"
-import * as commandModules from "./commands/_CommandList"
-const commands = Object(commandModules)
 
 export const client = new Client({ intents: new Intents(32767) })
 
@@ -18,8 +17,16 @@ client.on("interactionCreate", async (interaction: Interaction) => {
   if(!interaction.isCommand())
     return
 
-  await interaction.deferReply()
-  commands[interaction.commandName].execute(interaction, client)
+  const command = client.commands.get(interaction.commandName.toLowerCase())
+  if(command) {
+    await interaction.deferReply()
+    command.execute(interaction)
+  } else {
+    interaction.reply({
+      content: "Command not found",
+      ephemeral: true
+    })
+  }
 })
 
 client.login(process.env.BOT_TOKEN)
