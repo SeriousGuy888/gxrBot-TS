@@ -199,6 +199,8 @@ async function execute(interaction: CommandInteraction) {
 
 
 const searchDictionaryData = (dictionaryData: any[], searchTerm: string | undefined) => {
+  if(!searchTerm)
+    return dictionaryData
   return dictionaryData.filter(e => (
     e.word.toLowerCase().includes(searchTerm)
     || e.translation.toLowerCase().includes(searchTerm)
@@ -207,6 +209,9 @@ const searchDictionaryData = (dictionaryData: any[], searchTerm: string | undefi
 }
 
 const addWordToEmbed = (wordData: any, embed: MessageEmbed) => {
+  if(!wordData)
+    return
+
   const ipaReadings = wordData.ipa.split("|")
   const alts = wordData.alt_forms.split("|")
   const translation = wordData.translation
