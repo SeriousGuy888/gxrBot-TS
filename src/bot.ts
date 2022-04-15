@@ -3,6 +3,7 @@ import { Intents } from "discord.js"
 import Client from "./ExtendedClient"
 import deployCommands from "./deployCommands"
 import deployEvents from "./deployEvents"
+import "./firebase/firebase"
 
 export const client = new Client({ intents: new Intents(32767) })
 
