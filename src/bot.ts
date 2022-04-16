@@ -5,7 +5,10 @@ import deployCommands from "./deployCommands"
 import deployEvents from "./deployEvents"
 import "./firebase/firebase"
 
-export const client = new Client({ intents: new Intents(32767) })
+export const client = new Client({
+  partials: ["MESSAGE", "CHANNEL", "REACTION"],
+  intents: new Intents(32767),
+})
 
 client.once("ready", async () => {
   if(!client.user || !client.application)
