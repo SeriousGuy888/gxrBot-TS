@@ -1,3 +1,4 @@
+import { Snowflake } from "discord.js"
 import NodeCache from "node-cache"
 import { db } from "./firebase"
 
@@ -10,13 +11,13 @@ interface UserData {
 }
 
 
-export async function getUserData(id: string): Promise<UserData> {
-  if(cache.has(id))
-    return cache.get(id) as UserData
+export async function getUserData(userId: Snowflake): Promise<UserData> {
+  if(cache.has(userId))
+    return cache.get(userId) as UserData
   
   const userSnapshot = await db
     .collection("users")
-    .doc(id)
+    .doc(userId)
     .get()
   
   // merges incoming data from firestore with an instance of the
@@ -26,24 +27,25 @@ export async function getUserData(id: string): Promise<UserData> {
     ...userSnapshot.data(),
   }
 
-  cache.set(id, userData)
+  cache.set(userId, userData)
   return userData
 }
 
 /**
  * Merges provided user data to the current user data, which may be cached.
- * Merged data is written to the cache and will be written to Firestore later.
- * @param id User ID
+ * Merged data is written to the cache immediately and will be written to
+ * Firestore later.
+ * @param userId User ID
  * @param data Changes to make to user data
  */
-export async function setUserData(id: string, data: Object) {
+export async function setUserData(userId: Snowflake, data: Object) {
   const userData = {
-    ...await getUserData(id),
+    ...await getUserData(userId),
     ...data
   }
 
-  changedValues.add(id)
-  cache.set(id, userData)
+  changedValues.add(userId)
+  cache.set(userId, userData)
 }
 
 export async function writeUsersToFirestore() {
