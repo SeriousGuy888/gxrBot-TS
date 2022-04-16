@@ -6,7 +6,7 @@ import { Command } from "../interfaces"
 const data = new SlashCommandBuilder()
   .setName("karma")
   .setDescription("Check how much karma a user has")
-  .addUserOption(option => {
+  .addUserOption((option) => {
     return option
       .setName("user")
       .setDescription("The user to check the karma of")
@@ -21,7 +21,7 @@ async function execute(interaction: CommandInteraction) {
     .setColor("FUCHSIA")
     .setTitle(`${user.tag}'s Karma`)
     .setDescription(`✨ ${userData.karma}`)
-    
+
   await interaction.followUp({ embeds: [embed] })
 }
 

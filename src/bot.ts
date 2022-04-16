@@ -11,9 +11,8 @@ export const client = new Client({
 })
 
 client.once("ready", async () => {
-  if(!client.user || !client.application)
-    return
-  
+  if (!client.user || !client.application) return
+
   await deployCommands()
   await deployEvents()
   console.log(`Authenticated as ${client.user.tag}`)

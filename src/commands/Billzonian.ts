@@ -5,22 +5,24 @@ import {
   MessageActionRow,
   MessageButton,
   MessageComponentInteraction,
-  MessageEmbed
+  MessageEmbed,
 } from "discord.js"
 import axios from "axios"
 import csv from "csvtojson"
 import { Command } from "../interfaces"
 
 const repoUrl = "https://github.com/SeriousGuy888/Billzonian"
-const dictionaryUrl = "https://seriousguy888.github.io/Billzonian/vocabulary.csv"
-
+const dictionaryUrl =
+  "https://seriousguy888.github.io/Billzonian/vocabulary.csv"
 
 const data = new SlashCommandBuilder()
   .setName("billzonian")
   .setDescription("Look up a word in the Billzonian dictionary")
-  .addStringOption(option => option
-    .setName("word")
-    .setDescription("Search term - Billzonian or English word"))
+  .addStringOption((option) =>
+    option
+      .setName("word")
+      .setDescription("Search term - Billzonian or English word"),
+  )
 
 async function execute(interaction: CommandInteraction) {
   let response
@@ -30,44 +32,50 @@ async function execute(interaction: CommandInteraction) {
     interaction.followUp({ content: "Could not fetch dictionary data." })
     return
   }
-  
+
   const dictionaryData = await csv().fromString(response.data)
   const itemsPerPage = 3
   const searchTerm = interaction.options.getString("word")?.toLowerCase()
   let maxPages = Math.ceil(dictionaryData.length / itemsPerPage)
   let page = 1
-  let msg = (await interaction.followUp({ content: "Loading dictionary..." })) as Message
+  let msg = (await interaction.followUp({
+    content: "Loading dictionary...",
+  })) as Message
 
-  const displayDictionary = async (targetMessage: Message, disableButtons: boolean) => {
+  const displayDictionary = async (
+    targetMessage: Message,
+    disableButtons: boolean,
+  ) => {
     let searchResults = searchDictionaryData(dictionaryData, searchTerm)
 
     maxPages = Math.ceil(searchResults.length / itemsPerPage)
-
-
 
     const responseEmbed = new MessageEmbed()
       .setColor("#fca503")
       .setTitle("The Billzonian-English Dictionary")
       .setURL(dictionaryUrl)
       .setFooter({ text: `Page ${page} of ${maxPages}` })
-      .setDescription([
-        "This dictionary is not necessarily a comprehensive collection.",
-        `If a word is missing, you can [make an issue here.](${repoUrl})`,
-        "",
-        `:mag: Search Term: \`${searchTerm || "[None]"}\``,
-        "\u200b",
-      ].join("\n"))
-    
+      .setDescription(
+        [
+          "This dictionary is not necessarily a comprehensive collection.",
+          `If a word is missing, you can [make an issue here.](${repoUrl})`,
+          "",
+          `:mag: Search Term: \`${searchTerm || "[None]"}\``,
+          "\u200b",
+        ].join("\n"),
+      )
 
-
-    if(maxPages === 0) {
+    if (maxPages === 0) {
       responseEmbed
-        .addField("No Words Found :(", [
-          "Try double checking your search term.",
-          "Shu attempt tu reakratise thy search term.",
-        ].join("\n"))
+        .addField(
+          "No Words Found :(",
+          [
+            "Try double checking your search term.",
+            "Shu attempt tu reakratise thy search term.",
+          ].join("\n"),
+        )
         .addField("\u200b", "\u200b")
-        // todo: implement similar word matching
+      // todo: implement similar word matching
 
       return targetMessage.edit({
         content: null,
@@ -75,22 +83,24 @@ async function execute(interaction: CommandInteraction) {
       })
     }
 
-    
-    searchResults.forEach(e => {
-      if(e?.word?.toLowerCase() === searchTerm) {
+    searchResults.forEach((e) => {
+      if (e?.word?.toLowerCase() === searchTerm) {
         e.isExactMatch = true
-        searchResults = moveArrayItem(searchResults, searchResults.indexOf(e), 0)
+        searchResults = moveArrayItem(
+          searchResults,
+          searchResults.indexOf(e),
+          0,
+        )
       }
     })
 
-    for(let i = 0; i < Math.min(itemsPerPage, searchResults.length); i++) {
-      const entryIndex = i + ((page - 1) * itemsPerPage)
+    for (let i = 0; i < Math.min(itemsPerPage, searchResults.length); i++) {
+      const entryIndex = i + (page - 1) * itemsPerPage
       const wordData = searchResults[entryIndex]
-    
+
       addWordToEmbed(wordData, responseEmbed)
     }
     responseEmbed.addField("\u200b", "\u200b")
-
 
     const buttonRows = [
       new MessageActionRow().addComponents(
@@ -136,11 +146,11 @@ async function execute(interaction: CommandInteraction) {
           .setLabel("10 >")
           .setStyle("SECONDARY")
           .setDisabled(page >= maxPages - 10),
-      )
+      ),
     ]
-    if(disableButtons) {
-      buttonRows.forEach(row => {
-        row.components.forEach(comp => comp.setDisabled(true))
+    if (disableButtons) {
+      buttonRows.forEach((row) => {
+        row.components.forEach((comp) => comp.setDisabled(true))
       })
     }
 
@@ -153,13 +163,15 @@ async function execute(interaction: CommandInteraction) {
 
   msg = await displayDictionary(msg, false)
 
-  const filter = (inter: MessageComponentInteraction) => inter.user.id === interaction.user.id
-  const collector = msg.channel.createMessageComponentCollector({ filter, time: 60000 })
+  const filter = (inter: MessageComponentInteraction) =>
+    inter.user.id === interaction.user.id
+  const collector = msg.channel
+    .createMessageComponentCollector({ filter, time: 60000 })
     .on("collect", async (inter) => {
       collector.resetTimer()
 
       const buttonId = inter.customId
-      switch(buttonId) {
+      switch (buttonId) {
         case "first":
           page = 1
           break
@@ -188,7 +200,9 @@ async function execute(interaction: CommandInteraction) {
 
       page = Math.max(Math.min(maxPages, page), 1)
 
-      inter.deferUpdate().catch(() => { /* swallow error */ })
+      inter.deferUpdate().catch(() => {
+        /* swallow error */
+      })
       displayDictionary(msg, false)
     })
     .on("end", async () => {
@@ -197,20 +211,21 @@ async function execute(interaction: CommandInteraction) {
     })
 }
 
-
-const searchDictionaryData = (dictionaryData: any[], searchTerm: string | undefined) => {
-  if(!searchTerm)
-    return dictionaryData
-  return dictionaryData.filter(e => (
-    e.word.toLowerCase().includes(searchTerm)
-    || e.translation.toLowerCase().includes(searchTerm)
-    || e.alt_forms.toLowerCase().includes(searchTerm)
-  ))
+const searchDictionaryData = (
+  dictionaryData: any[],
+  searchTerm: string | undefined,
+) => {
+  if (!searchTerm) return dictionaryData
+  return dictionaryData.filter(
+    (e) =>
+      e.word.toLowerCase().includes(searchTerm) ||
+      e.translation.toLowerCase().includes(searchTerm) ||
+      e.alt_forms.toLowerCase().includes(searchTerm),
+  )
 }
 
 const addWordToEmbed = (wordData: any, embed: MessageEmbed) => {
-  if(!wordData)
-    return
+  if (!wordData) return
 
   const ipaReadings = wordData.ipa.split("|")
   const alts = wordData.alt_forms.split("|")
@@ -219,36 +234,43 @@ const addWordToEmbed = (wordData: any, embed: MessageEmbed) => {
   const notes = wordData.notes
 
   let ipaReadingsString = "No IPA transcription provided."
-  if(wordData.ipa) {
+  if (wordData.ipa) {
     ipaReadingsString = ipaReadings
-      .map((e: string) => `/[${e}](http://ipa-reader.xyz/?text=${encodeURI(e)})/`)
+      .map(
+        (e: string) => `/[${e}](http://ipa-reader.xyz/?text=${encodeURI(e)})/`,
+      )
       .join(" or ")
   }
 
   embed.addField(
-    `${wordData.word && "**" + wordData.word + "**"} \`${wordData.pos}\`${wordData.isExactMatch ? " ⭐" : ""}`,
+    `${wordData.word && "**" + wordData.word + "**"} \`${wordData.pos}\`${
+      wordData.isExactMatch ? " ⭐" : ""
+    }`,
     [
       ipaReadingsString,
       wordData.alt_forms && `\`Alt:\` ${alts.join(", ")}`,
       listify(translation, "numbers"),
       listify(example, "letters"),
       listify(notes, "bullets"),
-    ].filter(e => e).join("\n"),
-    true
+    ]
+      .filter((e) => e)
+      .join("\n"),
+    true,
   )
 }
 
-
-const listify = (str: string, startLineWith: ("numbers" | "letters" | "bullets")) => {
-  if(!str)
-    return ""
+const listify = (
+  str: string,
+  startLineWith: "numbers" | "letters" | "bullets",
+) => {
+  if (!str) return ""
 
   const lines = str.split("|")
   const numberedLines = []
   const letters = "abcdefghijklmnopqrstuvwxyz"
-  for(let i = 0; i < lines.length; i++) {
+  for (let i = 0; i < lines.length; i++) {
     let bullet
-    switch(startLineWith) {
+    switch (startLineWith) {
       case "numbers":
         bullet = `\`${(i + 1).toString() + "."}\``
         break
@@ -256,7 +278,7 @@ const listify = (str: string, startLineWith: ("numbers" | "letters" | "bullets")
         bullet = "`" + letters.charAt(i % letters.length) + ".`"
         break
       case "bullets":
-        bullet = "\`•\`"
+        bullet = "`•`"
         break
     }
 

@@ -1,16 +1,17 @@
 import { SlashCommandBuilder } from "@discordjs/builders"
 import { CommandInteraction } from "discord.js"
-import { getUserData, setUserData, writeUsersToFirestore } from "../firebase/usersColl"
+import {
+  getUserData,
+  setUserData,
+  writeUsersToFirestore,
+} from "../firebase/usersColl"
 import { Command } from "../interfaces"
 
 const data = new SlashCommandBuilder()
   .setName("test")
   .setDescription("test")
-  .addUserOption(option => {
-    return option
-      .setName("user")
-      .setDescription("user")
-      .setRequired(true)
+  .addUserOption((option) => {
+    return option.setName("user").setDescription("user").setRequired(true)
   })
 
 async function execute(interaction: CommandInteraction) {
