@@ -1,10 +1,6 @@
 import { SlashCommandBuilder } from "@discordjs/builders"
 import { CommandInteraction } from "discord.js"
-import {
-  getUserData,
-  setUserData,
-  writeUsersToFirestore,
-} from "../firebase/usersColl"
+import { writeKarmaChanges } from "../firebase/karmaDb"
 import { Command } from "../interfaces"
 
 const data = new SlashCommandBuilder()
@@ -15,13 +11,8 @@ const data = new SlashCommandBuilder()
   })
 
 async function execute(interaction: CommandInteraction) {
-  const user = interaction.options.getUser("user")!
-  let userData = await getUserData(user.id)
-  userData.karma ??= 0
-  userData.karma++
-
-  await setUserData(user.id, userData)
-  await interaction.followUp({ content: `added 1 karma to ${user.tag}` })
+  await writeKarmaChanges()
+  await interaction.followUp({ content: "ok" })
 }
 
 export const Test = { data, execute } as Command

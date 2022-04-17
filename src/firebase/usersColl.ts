@@ -26,39 +26,38 @@ export async function getUserData(userId: Snowflake): Promise<UserData> {
   return userData
 }
 
-/**
- * Merges provided user data to the current user data, which may be cached.
- * Merged data is written to the cache immediately and will be written to
- * Firestore later.
- * @param userId User ID
- * @param data Changes to make to user data
- */
-export async function setUserData(userId: Snowflake, data: Object) {
-  const userData = {
-    ...(await getUserData(userId)),
-    ...data,
-  }
+// /**
+//  * Merges provided user data to the current user data, which may be cached.
+//  * Merged data is written to the cache immediately and will be written to
+//  * Firestore later.
+//  * @param userId User ID
+//  * @param data Changes to make to user data
+//  */
+// export async function setUserData(userId: Snowflake, data: Object) {
+//   const userData = {
+//     ...(await getUserData(userId)),
+//     ...data,
+//   }
+//   changedValues.add(userId)
+//   cache.set(userId, userData)
+// }
 
-  changedValues.add(userId)
-  cache.set(userId, userData)
-}
+// export async function writeUsersToFirestore() {
+//   if (changedValues.size === 0) return
 
-export async function writeUsersToFirestore() {
-  if (changedValues.size === 0) return
+//   const valuesToWrite = cache.mget<Object>(Array.from(changedValues))
+//   const batch = db.batch()
 
-  const valuesToWrite = cache.mget<Object>(Array.from(changedValues))
-  const batch = db.batch()
+//   for (const id in valuesToWrite) {
+//     const ref = db.collection("users").doc(id)
+//     batch.set(ref, valuesToWrite[id], { merge: true })
+//   }
 
-  for (const id in valuesToWrite) {
-    const ref = db.collection("users").doc(id)
-    batch.set(ref, valuesToWrite[id], { merge: true })
-  }
-
-  batch
-    .commit()
-    .then(() => {
-      console.log(`Successfully updated data of ${changedValues.size} users.`)
-      changedValues.clear()
-    })
-    .catch(console.error)
-}
+//   batch
+//     .commit()
+//     .then(() => {
+//       console.log(`Successfully updated data of ${changedValues.size} users.`)
+//       changedValues.clear()
+//     })
+//     .catch(console.error)
+// }

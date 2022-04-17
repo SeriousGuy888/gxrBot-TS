@@ -1,5 +1,5 @@
 import { MessageReaction, Snowflake, User } from "discord.js"
-import { getUserData, setUserData } from "../firebase/usersColl"
+import { addKarma } from "../firebase/karmaDb"
 
 enum EmojiId {
   upvote = "713823817004220416",
@@ -25,13 +25,4 @@ export async function processReactionEvent(
   if (changeMade === "remove") change *= -1
 
   await addKarma(messageAuthor.id, change)
-}
-
-export async function addKarma(userId: Snowflake, amount: number) {
-  let userData = await getUserData(userId)
-  userData.karma ??= 0
-  userData.karma += amount
-
-  console.log(`Added ${amount} karma to user ${userId}`)
-  await setUserData(userId, userData)
 }
