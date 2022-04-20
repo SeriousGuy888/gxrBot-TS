@@ -1,8 +1,13 @@
 {
+  "#emojis": "Key for upvote & downvote emojis. Can be Unicode emojis or Discord custom emoji ID numbers.",
   "emojis": {
     "upvote": "⬆️",
     "downvote": "⬇️"
   },
+  "#voteChannels": "List of channel IDs where the upvote and downvote emojis will be automatically added to any message posted there.",
+  "voteChannels": [
+    "739976529437524029"
+  ],
   "temp_upvote": "713823817004220416",
   "temp_downvote": "713824298275569734"
 }
