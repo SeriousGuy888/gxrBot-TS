@@ -19,30 +19,50 @@ export async function getKarma(userId: Snowflake) {
   return (userData.karma ?? 0) + pendingAmt
 }
 
+interface LeaderboardEntry {
+  id: string
+  karma: number
+}
+
 export async function getTopKarma(places = 10) {
+  if (karmaCache.has("LEADERBOARD_DATA")) {
+    return lbAddPendingKarma(
+      karmaCache.get("LEADERBOARD_DATA") as LeaderboardEntry[],
+    )
+  }
+
   const { docs } = await db
     .collection("users")
     .orderBy("karma", "desc")
     .limit(places)
     .get()
 
-  const users: { id: string; karma: number }[] = []
+  const users: LeaderboardEntry[] = []
   docs.forEach((doc) => {
     const data = doc.data()
     const { id } = doc
 
-    // get user karma from db, add pending karma changes not yet in db
+    // get user karma from db
     const karma: number = data.karma ?? 0
-    const displayKarma = karma + (pendingChanges.get(id) ?? 0)
 
     // cache data appropriately
     writeToUserCache(id, data)
     karmaCache.set(id, karma)
 
-    users.push({ id, karma: displayKarma })
+    users.push({ id, karma: karma })
   })
 
-  return users
+  karmaCache.set("LEADERBOARD_DATA", users, 60 * 60 * 1000)
+  return lbAddPendingKarma(users)
+}
+
+function lbAddPendingKarma(leaderboardData: LeaderboardEntry[]) {
+  leaderboardData.forEach((entry) => {
+    if (pendingChanges.has(entry.id))
+      entry.karma += pendingChanges.get(entry.id)!
+  })
+
+  return leaderboardData.sort((a, b) => b.karma - a.karma)
 }
 
 export async function addKarma(userId: Snowflake, amount: number) {
@@ -60,7 +80,7 @@ export async function writeKarmaChanges() {
 
     const ref = db.collection("users").doc(userId)
     const increment = firestore.FieldValue.increment(karmaChange)
-    batch.update(ref, { karma: increment })
+    batch.set(ref, { karma: increment }, { merge: true })
   })
 
   batch
