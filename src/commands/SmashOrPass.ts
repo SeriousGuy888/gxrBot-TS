@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from "@discordjs/builders"
 import {
   Collection,
-  CommandInteraction, 
+  CommandInteraction,
   GuildMember,
   Interaction,
   InteractionReplyOptions,
@@ -9,14 +9,13 @@ import {
   MessageActionRow,
   MessageButton,
   MessageEmbed,
-  Snowflake
+  Snowflake,
 } from "discord.js"
 import { Command } from "src/interfaces"
 
 const data = new SlashCommandBuilder()
   .setName("smash_or_pass")
   .setDescription("Start a game of smash or pass")
-
 
 interface GameState {
   yetPickedColl: Collection<Snowflake, GuildMember>
@@ -42,22 +41,29 @@ async function execute(interaction: CommandInteraction) {
   await nextTurn(gameState, interaction)
 }
 
-const nextTurn = async (gameState: GameState, interaction: CommandInteraction, gameOver = false) => {
+const nextTurn = async (
+  gameState: GameState,
+  interaction: CommandInteraction,
+  gameOver = false,
+) => {
   const currentPerson = gameOver ? undefined : pickNextPerson(gameState)
-  
+
   const messagePayload = buildReply(gameState, currentPerson)
-  if (!gameState.message) gameState.message = await interaction.followUp(messagePayload) as Message
-  else gameState.message = await interaction.editReply(messagePayload) as Message
-  
+  if (!gameState.message)
+    gameState.message = (await interaction.followUp(messagePayload)) as Message
+  else
+    gameState.message = (await interaction.editReply(messagePayload)) as Message
+
   if (!gameState.message) return
   if (!currentPerson) return
-  
+
   const filter = (inter: Interaction) => interaction.user.id === inter.user.id
-  gameState.message.awaitMessageComponent({ filter, componentType: "BUTTON", time: 45_000 })
+  gameState.message
+    .awaitMessageComponent({ filter, componentType: "BUTTON", time: 45_000 })
     .catch(async () => {
       await nextTurn(gameState, interaction, true)
     })
-    .then(async inter => {
+    .then(async (inter) => {
       if (!inter) return
       inter.deferUpdate()
 
@@ -78,21 +84,22 @@ const nextTurn = async (gameState: GameState, interaction: CommandInteraction, g
     })
 }
 
-const buildReply = (gameState: GameState, currentPerson: GuildMember | undefined): InteractionReplyOptions => {
+const buildReply = (
+  gameState: GameState,
+  currentPerson: GuildMember | undefined,
+): InteractionReplyOptions => {
   let components: MessageActionRow[] = []
 
-  const embed = new MessageEmbed()
-    .setTitle("Smash or Pass")
-    .setColor("PURPLE")
-  
+  const embed = new MessageEmbed().setTitle("Smash or Pass").setColor("PURPLE")
+
   if (currentPerson) {
     embed
       .setDescription(currentPerson.toString())
       .addField("\u200b", "\u200b")
-      .addField("Smashes", gameState.smashedIds.length.toString(), true)
-      .addField("Passes", gameState.passedIds.length.toString(), true)
+      .addField("🔨 Smashes", gameState.smashedIds.length.toString(), true)
+      .addField("🛂 Passes", gameState.passedIds.length.toString(), true)
       .setFooter({ text: `${gameState.yetPickedColl.size} people remaining` })
-    
+
     components = [
       new MessageActionRow().addComponents(
         new MessageButton()
@@ -106,15 +113,23 @@ const buildReply = (gameState: GameState, currentPerson: GuildMember | undefined
         new MessageButton()
           .setCustomId("exit")
           .setLabel("End Game")
-          .setStyle("SECONDARY")
-      )
+          .setStyle("SECONDARY"),
+      ),
     ]
   } else {
     const { smashedIds, passedIds } = gameState
     embed
       .setDescription("Game Ended")
-      .addField(`Smashes (${smashedIds.length})`, mentionIds(smashedIds), true)
-      .addField(`Passes (${passedIds.length})`, mentionIds(passedIds), true)
+      .addField(
+        `🔨 People Smashed (${smashedIds.length})`,
+        mentionIds(smashedIds),
+        true,
+      )
+      .addField(
+        `🛂 People Passed (${passedIds.length})`,
+        mentionIds(passedIds),
+        true,
+      )
   }
 
   return {
@@ -124,16 +139,15 @@ const buildReply = (gameState: GameState, currentPerson: GuildMember | undefined
 }
 
 const mentionIds = (idArray: Snowflake[]) => {
-  return idArray.map(val => `<@${val}>`).join("\n")
+  return idArray.map((val) => `<@${val}>`).join("\n") || "None"
 }
-
 
 const pickNextPerson = ({ yetPickedColl, pickedColl }: GameState) => {
   const pickedKey = yetPickedColl.randomKey()
   if (!pickedKey) return
   const picked = yetPickedColl.get(pickedKey)
   if (!picked) return
-  
+
   yetPickedColl.delete(pickedKey)
   pickedColl.set(pickedKey, picked)
 
