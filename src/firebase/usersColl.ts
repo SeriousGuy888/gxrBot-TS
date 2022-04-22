@@ -22,9 +22,21 @@ export async function getUserData(userId: Snowflake): Promise<UserData> {
     ...userSnapshot.data(),
   }
 
-  cache.set(userId, userData)
+  writeToUserCache(userId, userData)
   return userData
 }
+
+/**
+ * Overwrite whatever is in the cache for the given user ID.
+ * Will not be permanently written to the database.
+ * Used for when data has just been fetched and no data has changed.
+ * @param userId UserID
+ * @param data New cache data
+ */
+export function writeToUserCache(userId: Snowflake, data: Object) {
+  cache.set(userId, data)
+}
+
 
 // /**
 //  * Merges provided user data to the current user data, which may be cached.
