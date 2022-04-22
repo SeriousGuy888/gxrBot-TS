@@ -139,7 +139,12 @@ const buildReply = (
 }
 
 const mentionIds = (idArray: Snowflake[]) => {
-  return idArray.map((val) => `<@${val}>`).join("\n") || "None"
+  return (
+    idArray
+      .map((val) => `<@${val}>`)
+      .join("\n")
+      .slice(0, 1023) || "None"
+  )
 }
 
 const pickNextPerson = ({ yetPickedColl, pickedColl }: GameState) => {
