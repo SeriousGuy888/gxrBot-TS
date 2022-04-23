@@ -7,8 +7,6 @@ export async function processReactionEvent(
   user: User,
   changeMade: "add" | "remove",
 ) {
-  if (messageReaction.partial) messageReaction = await messageReaction.fetch()
-
   // uses emoji id number if a custom emoji, uses literal string representation for unicode emojis
   const emojiId = messageReaction.emoji.id ?? messageReaction.emoji.toString()
   const messageAuthor = messageReaction.message.author
