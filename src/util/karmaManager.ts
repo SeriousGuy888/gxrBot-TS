@@ -7,6 +7,9 @@ export async function processReactionEvent(
   user: User,
   changeMade: "add" | "remove",
 ) {
+  // if outside of gxr guild, don't count votes towards karma
+  if (messageReaction.message.guildId !== process.env.MAIN_GUILD_ID) return
+
   // uses emoji id number if a custom emoji, uses literal string representation for unicode emojis
   const emojiId = messageReaction.emoji.id ?? messageReaction.emoji.toString()
   const messageAuthor = messageReaction.message.author
