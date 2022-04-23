@@ -1,13 +1,20 @@
 import { GuildEmoji, Message } from "discord.js"
 import { client } from "../bot"
 import { emojiKey, channels } from "../data/auto_reactions.json"
+const emojiDictionary = require("emoji-dictionary") // no ts declaration file D:
 
 export async function addReactions(message: Message) {
   if (message.author.id === client.user?.id) return
 
   // #counting in gxr
-  if (message.channel.id === "634597235362889728")
+  if (message.channel.id === "634597235362889728") {
     countingChannelReactions(message)
+  }
+
+  // daily facts channel
+  if (message.channel.id === "735708848333258822") {
+    dailyFactReactions(message)
+  }
 
   for (const channelId in channels) {
     if (message.channel.id !== channelId) continue
@@ -52,6 +59,30 @@ async function countingChannelReactions(message: Message) {
   if (num % 10_000 === 0) await multiReact(message, ["🏅", tenThousandEmoji])
   if (num % 1_000 === 0) await message.react("🎉")
   if (num % 100 === 0) await message.react("💯")
+}
+
+// finds emojis relevant to words in the message and adds them
+async function dailyFactReactions(message: Message) {
+  const words = message.content
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/, "")
+    .split(" ")
+
+  const emojis: string[] = []
+  let emojisFound = 0
+  words.forEach((word) => {
+    if (emojisFound >= 12) return
+
+    const foundEmoji = emojiDictionary.getUnicode(word)
+    if (foundEmoji) {
+      emojis.push(foundEmoji)
+      emojisFound++
+    }
+  })
+
+  if (emojis.length > 0) {
+    multiReact(message, emojis)
+  }
 }
 
 async function multiReact(
