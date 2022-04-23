@@ -4,6 +4,9 @@ import { Event } from "../interfaces"
 import { checkCultMessage } from "../util/cultChannel"
 
 async function execute(_oldMessage: Message, newMessage: Message) {
+  // convert partial (object that contains only the id) to full object
+  if (newMessage.partial) newMessage = await newMessage.fetch()
+
   await checkCultMessage(newMessage)
   await checkOwsMessage(newMessage)
 }

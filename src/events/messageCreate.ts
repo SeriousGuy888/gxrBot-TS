@@ -6,6 +6,9 @@ import { addReactions } from "../util/autoReactor"
 import { checkOwsMessage } from "../util/owsChannel"
 
 async function execute(message: Message) {
+  // convert partial (object that contains only the id) to full object
+  if (message.partial) message = await message.fetch()
+
   await addVoteReactions(message)
   await checkCultMessage(message)
   await checkOwsMessage(message)
