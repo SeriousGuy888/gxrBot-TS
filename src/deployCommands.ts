@@ -18,13 +18,16 @@ export default async function () {
   try {
     console.log("Deploying slash commands...")
 
+    // deploy to test guild
     await rest.put(
       Routes.applicationGuildCommands(
         process.env.CLIENT_ID as string,
-        process.env.GUILD_ID as string,
+        process.env.TEST_GUILD_ID as string,
       ),
       { body: commands },
     )
+
+    // deploy globally
     await rest.put(
       Routes.applicationCommands(process.env.CLIENT_ID as string),
       { body: commands },
