@@ -1,10 +1,31 @@
 import { GuildEmoji, Message } from "discord.js"
 import { client } from "../bot"
+import { emojiKey, channels } from "../data/auto_reactions.json"
 
 export async function addReactions(message: Message) {
+  if (message.author.id === client.user?.id) return
+
   // #counting in gxr
   if (message.channel.id === "634597235362889728")
     countingChannelReactions(message)
+
+  for (const channelId in channels) {
+    if (message.channel.id !== channelId) continue
+
+    // get array of reactions for this channel
+    const channelReactions = (
+      channels as { [key: string]: string[] } & typeof channels
+    )[channelId]
+
+    channelReactions.forEach(async (reaction) => {
+      const emoji = await getEmojiFromKey(reaction)
+      if (!emoji) return
+
+      await message.react(emoji).catch(() => {
+        console.log(`Failed to add reaction ${emoji}`)
+      })
+    })
+  }
 }
 
 // hardcoded because ive learned that doing this logic with
@@ -21,7 +42,7 @@ async function countingChannelReactions(message: Message) {
   if (content.endsWith("420")) await message.react("🍀")
   if (content.includes("69"))
     await multiReact(message, ["🇫", "🇺", "🇳", "🇲", "🇾"])
-  
+
   // palindromes
   if (content.split("").reverse().join("") === content)
     await message.react("🎁")
@@ -46,4 +67,15 @@ async function multiReact(
       console.log(`Failed to react with emoji ${loopEmoji}`)
     }
   }
+}
+
+async function getEmojiFromKey(name: string) {
+  // get value from key in emojiKey
+  const emojiId = (
+    emojiKey as {
+      [key: string]: string
+    } & typeof emojiKey
+  )[name]
+
+  return client.emojis.resolve(emojiId) ?? name
 }
