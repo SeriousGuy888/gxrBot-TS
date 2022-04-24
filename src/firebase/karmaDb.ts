@@ -83,18 +83,14 @@ export async function writeKarmaChanges() {
     batch.set(ref, { karma: increment }, { merge: true })
   })
 
-  batch
+  await batch
     .commit()
-    .then(() => {
-      console.log(`Successfully updated karma of ${pendingChanges.size} users.`)
-      pendingChanges.forEach((karmaChange, userId) => {
-        if (karmaCache.has(userId))
-          karmaCache.set(
-            userId,
-            (karmaCache.get(userId) as number) + karmaChange,
-          )
-      })
-      pendingChanges.clear()
-    })
-    .catch(console.error)
+    .catch((err) => console.error(`Error while writing pending karma: ${err}`))
+
+  console.log(`Successfully updated karma of ${pendingChanges.size} users.`)
+  pendingChanges.forEach((karmaChange, userId) => {
+    if (karmaCache.has(userId))
+      karmaCache.set(userId, (karmaCache.get(userId) as number) + karmaChange)
+  })
+  pendingChanges.clear()
 }
