@@ -12,6 +12,6 @@ const app = initializeApp({
 })
 export const db = getFirestore(app)
 
-cron.schedule("* */15 * * * *", async () => {
+cron.schedule("0 */15 * * * *", async () => {
   await writeKarmaChanges()
 })
