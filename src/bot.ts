@@ -14,6 +14,15 @@ export const client = new Client({
 
 client.once("ready", async () => {
   if (!client.user || !client.application) return
+  client.user.setPresence({
+    status: "online",
+    activities: [
+      {
+        name: "the karma race",
+        type: "COMPETING",
+      },
+    ],
+  })
 
   await deployCommands()
   await deployEvents()
@@ -21,7 +30,6 @@ client.once("ready", async () => {
 })
 
 client.login(process.env.BOT_TOKEN)
-
 
 onShutdown(async () => {
   console.log("Graceful shutdown in progress...")
