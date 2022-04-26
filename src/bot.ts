@@ -1,4 +1,5 @@
 import "./config"
+import "./keepAlive"
 import { Intents } from "discord.js"
 import Client from "./ExtendedClient"
 import deployCommands from "./deployCommands"
