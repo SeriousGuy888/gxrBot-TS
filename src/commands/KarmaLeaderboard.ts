@@ -23,10 +23,11 @@ async function execute(interaction: CommandInteraction) {
     )
     .setFooter({ text: "You cannot affect vote on your own messages." })
 
-  let rank = 1
+  let rank = 0
   topUsers.forEach(({ id, karma }) => {
     const isAuthor = interaction.user.id === id
 
+    rank++
     const rankStr = getRankStr(rank, isAuthor)
     const mention = `<@${id}>`
     const emoji = karma > 0 ? upvote : downvote
@@ -38,7 +39,6 @@ async function execute(interaction: CommandInteraction) {
 
     // space the first 3 entries from the others as a podium
     if (rank === 3) embed.addField("\u200b", "\u200b")
-    rank++
   })
 
   interaction.followUp({ embeds: [embed] })
