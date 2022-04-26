@@ -10,7 +10,7 @@ const data = new SlashCommandBuilder()
   .setDescription("Users with the most karma")
 
 async function execute(interaction: CommandInteraction) {
-  const topUsers = await getTopKarma()
+  const topUsers = await getTopKarma(15)
   const upvote = client.emojis.resolve(emojis.upvote) ?? emojis.upvote
   const downvote = client.emojis.resolve(emojis.downvote) ?? emojis.downvote
 
@@ -25,12 +25,17 @@ async function execute(interaction: CommandInteraction) {
 
   let rank = 0
   topUsers.forEach(({ id, karma }) => {
+    const isAuthor = interaction.user.id === id
+
+    const rankStr = getRankStr(rank, isAuthor)
+    const mention = `<@${id}>`
+    const emoji = karma > 0 ? upvote : downvote
+    const karmaStr = isAuthor
+      ? `[${karma}](https://www.youtube.com/watch?v=aB5Eqo9-gfU)` // make text blue if its the author
+      : karma.toString()
+
     rank++
-    embed.addField(
-      getRankStr(rank, interaction.user.id === id),
-      `<@${id}>\n\n${karma > 0 ? upvote : downvote} ${karma}\n\u200b`,
-      true,
-    )
+    embed.addField(rankStr, `${mention}\n${emoji} ${karmaStr}\n\u200b`, true)
 
     // space the first 3 entries from the others as a podium
     if (rank === 3) embed.addField("\u200b", "\u200b")
@@ -48,8 +53,8 @@ function getRankStr(rank: number, isAuthor: boolean) {
     case 3:
       return ":third_place: Third Place"
     default:
-      if (isAuthor) return `:star: #${rank.toString().padStart(2, "0")}`
-      else return `#${rank.toString().padStart(2, "0")}`
+      if (isAuthor) return `:star: #${rank.toString()}`
+      else return `#${rank.toString()}`
   }
 }
 
