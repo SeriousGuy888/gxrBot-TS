@@ -13,6 +13,7 @@
     "dotenv": "^16.0.0",
     "emoji-dictionary": "^1.0.11",
     "firebase-admin": "^10.0.2",
+    "node": "^17.7.2",
     "node-cache": "^5.1.2",
     "node-cron": "^3.0.0",
     "node-graceful-shutdown": "^1.1.2",
@@ -29,7 +30,7 @@
   },
   "scripts": {
     "build-run": "tsc && node dist/bot.js",
-    "start": "ts-node src/bot.ts",
+    "start": "npx ts-node src/bot.ts",
     "dev": "ts-node-dev src/bot.ts",
     "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write"
   }
