@@ -1,9 +1,8 @@
-import readline from "node:readline"
 import express from "express"
 import { stdin } from "process"
 const app = express()
 
-app.get("/", (req, res) => {
+app.get("/", (_, res) => {
   res.send("HTTP server running")
   res.end()
 })
