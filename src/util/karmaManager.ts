@@ -1,6 +1,7 @@
 import { Message, MessageReaction, User } from "discord.js"
 import { addKarma } from "../firebase/karmaDb"
 import { emojis, voteChannels } from "../data/karma.json"
+import { client } from "../bot"
 
 export async function processReactionEvent(
   messageReaction: MessageReaction,
@@ -35,7 +36,8 @@ export async function addVoteReactions(message: Message) {
   // but catch if any of them fail with Promise.all()
   const emojiArr = Object.values(emojis)
   Promise.all(
-    emojiArr.map(async (emoji) => {
+    emojiArr.map(async (emojiStr) => {
+      const emoji = client.emojis.resolve(emojiStr) ?? emojiStr
       return message.react(emoji)
     }),
   ).catch((err) => {
