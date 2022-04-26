@@ -45,7 +45,7 @@ async function execute(interaction: CommandInteraction) {
 }
 
 function getRankStr(rank: number, isAuthor: boolean) {
-  switch (rank) {
+  switch (rank + 1) {
     case 1:
       return ":first_place: First Place"
     case 2:
