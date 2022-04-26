@@ -31,7 +31,7 @@
   },
   "scripts": {
     "build-run": "tsc && node dist/bot.js",
-    "start": "while true; do npx ts-node src/bot.ts; sleep 2; done",
+    "start": "npx ts-node src/bot.ts",
     "dev": "ts-node-dev src/bot.ts",
     "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write"
   }

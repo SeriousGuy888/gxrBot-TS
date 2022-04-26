@@ -1,2 +1,2 @@
 language = "nodejs"
-run = "./repl.deploy --standalone npx npm start"
+run = "while true; do ./repl.deploy --standalone npx npm start; sleep 2; done"
