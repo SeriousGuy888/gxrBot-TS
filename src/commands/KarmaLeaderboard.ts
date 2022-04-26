@@ -23,7 +23,7 @@ async function execute(interaction: CommandInteraction) {
     )
     .setFooter({ text: "You cannot affect vote on your own messages." })
 
-  let rank = 0
+  let rank = 1
   topUsers.forEach(({ id, karma }) => {
     const isAuthor = interaction.user.id === id
 
@@ -34,18 +34,18 @@ async function execute(interaction: CommandInteraction) {
       ? `[${karma}](https://www.youtube.com/watch?v=aB5Eqo9-gfU)` // make text blue if its the author
       : karma.toString()
 
-    rank++
     embed.addField(rankStr, `${mention}\n${emoji} ${karmaStr}\n\u200b`, true)
 
     // space the first 3 entries from the others as a podium
     if (rank === 3) embed.addField("\u200b", "\u200b")
+    rank++
   })
 
   interaction.followUp({ embeds: [embed] })
 }
 
 function getRankStr(rank: number, isAuthor: boolean) {
-  switch (rank + 1) {
+  switch (rank) {
     case 1:
       return ":first_place: First Place"
     case 2:
