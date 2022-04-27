@@ -6,6 +6,8 @@ import deployEvents from "./deployEvents"
 import "./firebase/firebase"
 import { writeKarmaChanges } from "./firebase/karmaDb"
 import { onShutdown } from "node-graceful-shutdown"
+import cron from "node-cron"
+import { sendBirthdayReminder } from "./util/birthdayReminder"
 
 export const client = new Client({
   partials: ["MESSAGE", "CHANNEL", "REACTION"],
@@ -26,6 +28,11 @@ client.once("ready", async () => {
 
   await deployCommands()
   await deployEvents()
+
+  cron.schedule("0 0 * * *", async (date) => {
+    await sendBirthdayReminder(date)
+  }, { timezone: "America/Toronto" })
+
   console.log(`Authenticated as ${client.user.tag}`)
 })
 
