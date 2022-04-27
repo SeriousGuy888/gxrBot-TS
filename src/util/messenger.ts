@@ -1,5 +1,5 @@
 import { MessageOptions, MessagePayload, Snowflake } from "discord.js"
-import { client } from "src/bot"
+import { client } from "../bot"
 
 export async function sendDm(
   userId: Snowflake,
