@@ -6,7 +6,12 @@ interface Birthdays {
   [key: string]: string
 }
 
-export async function sendBirthdayReminder(date: Date) {
+export async function sendBirthdayReminders(date: Date) {
+  const embed = getBirthdayEmbed(date)
+  if (embed) await sendReminderDms(embed)
+}
+
+export function getBirthdayEmbed(date: Date) {
   const month = date.getMonth() + 1
   const day = date.getDate()
 
@@ -19,7 +24,7 @@ export async function sendBirthdayReminder(date: Date) {
 
   if (todaysBirthdays.length === 0) return
 
-  const emb = new MessageEmbed()
+  return new MessageEmbed()
     .setColor("FUCHSIA")
     .setTitle(":cake: Birthdays Today!")
     .setDescription(
@@ -28,8 +33,10 @@ export async function sendBirthdayReminder(date: Date) {
       )}\`\`\``,
     )
     .setFooter({ text: "Birthdays for " + date.toISOString().split("T")[0] })
+}
 
-  const msgOpts = { embeds: [emb] }
+async function sendReminderDms(embed: MessageEmbed) {
+  const msgOpts = { embeds: [embed] }
   try {
     await sendDm("192833577883402240", msgOpts)
     await sendDm("323170410818437130", msgOpts)
