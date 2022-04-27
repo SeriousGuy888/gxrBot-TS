@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from "@discordjs/builders"
 import { CommandInteraction } from "discord.js"
-import { getBirthdayEmbed } from "src/util/birthdayReminder"
+import { getBirthdayEmbed } from "../util/birthdayReminder"
 import { Command } from "../interfaces"
 
 const data = new SlashCommandBuilder().setName("test").setDescription("test")
