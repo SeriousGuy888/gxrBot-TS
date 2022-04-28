@@ -21,7 +21,7 @@ async function execute(interaction: CommandInteraction) {
       `You can react to other people's messages with ${upvote} or ${downvote} to affect their karma score.` +
         "\n\u200b",
     )
-    .setFooter({ text: "You cannot affect vote on your own messages." })
+    .setFooter({ text: "Voting on your own messages does not count towards your karma." })
 
   let rank = 0
   topUsers.forEach(({ id, karma }) => {
