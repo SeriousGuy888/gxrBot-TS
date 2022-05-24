@@ -24,14 +24,14 @@ export async function addReactions(message: Message) {
       channels as { [key: string]: string[] } & typeof channels
     )[channelId]
 
+    const emojis: (string | GuildEmoji | null)[] = []
     channelReactions.forEach(async (reaction) => {
       const emoji = await getEmojiFromKey(reaction)
       if (!emoji) return
-
-      await message.react(emoji).catch(() => {
-        console.log(`Failed to add reaction ${emoji}`)
-      })
+      emojis.push(emoji)
     })
+    
+    await multiReact(message, emojis)
   }
 }
 
