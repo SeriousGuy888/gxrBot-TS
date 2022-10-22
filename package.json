@@ -30,11 +30,11 @@
     "typescript": "^4.6.3"
   },
   "scripts": {
-    "run-js": "node dist/bot.js",
-    "start": "npx ts-node src/bot.ts",
+    "build": "tsc",
+    "start": "node dist/bot.js",
     "dev": "ts-node-dev src/bot.ts",
+    "start-ts": "npx ts-node src/bot.ts",
     "prettier-format": "prettier --config .prettierrc 'src/**/*.ts' --write",
-    "tsc": "tsc",
-    "postinstall": "npm run tsc"
+    "postinstall": "npm run build"
   }
 }
