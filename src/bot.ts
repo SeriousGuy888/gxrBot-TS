@@ -40,6 +40,9 @@ client.once("ready", async () => {
 client.login(process.env.BOT_TOKEN)
 
 const app = express()
+app.get("/", (req, res) => {
+  res.send("Hello, world!")
+})
 app.get("/ping", (req, res) => {
   res
     .status(200)
