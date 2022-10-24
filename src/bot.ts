@@ -45,7 +45,7 @@ app.get("/ping", (req, res) => {
     .status(200)
     .send("gxrbot online!")
 })
-app.listen(3000, () => console.log("Listening for HTTP requests!"))
+app.listen(10000, () => console.log("Listening for HTTP requests!"))
 
 
 onShutdown(async () => {
