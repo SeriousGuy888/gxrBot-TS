@@ -8,6 +8,7 @@ import { writeKarmaChanges } from "./firebase/karmaDb"
 import { onShutdown } from "node-graceful-shutdown"
 import cron from "node-cron"
 import { sendBirthdayReminders } from "./util/birthdayReminder"
+import express from "express"
 
 export const client = new Client({
   partials: ["MESSAGE", "CHANNEL", "REACTION"],
@@ -37,6 +38,15 @@ client.once("ready", async () => {
 })
 
 client.login(process.env.BOT_TOKEN)
+
+const app = express()
+app.get("/ping", (req, res) => {
+  res
+    .status(200)
+    .send("gxrbot online!")
+})
+app.listen(3000, () => console.log("Listening for HTTP requests!"))
+
 
 onShutdown(async () => {
   console.log("Graceful shutdown in progress...")
