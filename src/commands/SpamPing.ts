@@ -1,12 +1,13 @@
 import { SlashCommandBuilder } from "@discordjs/builders"
 import {
   BaseGuildTextChannel,
-  CommandInteraction,
   GuildChannelResolvable,
   Message,
-  MessageEmbed,
-  Permissions,
+  EmbedBuilder,
+  PermissionFlagsBits,
   Webhook,
+  ChatInputCommandInteraction,
+  Colors,
 } from "discord.js"
 import { Command } from "../interfaces"
 import { promisify } from "util"
@@ -47,7 +48,7 @@ const data = new SlashCommandBuilder()
       ),
   )
 
-async function execute(interaction: CommandInteraction) {
+async function execute(interaction: ChatInputCommandInteraction) {
   if (!interaction.guild) {
     interaction.followUp("Please use this command in a server.")
     return
@@ -58,7 +59,7 @@ async function execute(interaction: CommandInteraction) {
     !author ||
     !author
       .permissionsIn(interaction.channel as GuildChannelResolvable)
-      .has(Permissions.FLAGS.MANAGE_MESSAGES, true)
+      .has(PermissionFlagsBits.ManageMessages, true)
   ) {
     interaction.followUp(
       `Missing permission \`Manage Members\` or \`Administrator\`.`,
@@ -75,8 +76,8 @@ async function execute(interaction: CommandInteraction) {
 
   const title = shouldGhostPing ? "Ghost-Pinger" : "Spam-Pinger"
 
-  const responseEmbed = new MessageEmbed()
-    .setColor("GREEN")
+  const responseEmbed = new EmbedBuilder()
+    .setColor(Colors.Green)
     .setTitle(title)
     .setDescription(`Pinging ${user} ${times} times.`)
   interaction.followUp({ embeds: [responseEmbed], ephemeral: shouldGhostPing })
@@ -107,7 +108,7 @@ async function execute(interaction: CommandInteraction) {
     return w.name.includes(hookName) && w?.owner?.id === client?.user?.id
   })
   if (!webhook) {
-    webhook = await channel.createWebhook(hookName, { avatar: avatarUrl })
+    webhook = await channel.createWebhook({ name: hookName, avatar: avatarUrl })
   }
 
   for (let i = 0; i < times; i++) {

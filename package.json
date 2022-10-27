@@ -4,13 +4,11 @@
   "description": "gxrBot but rewritten in typescript",
   "main": "src/bot.ts",
   "dependencies": {
-    "@discordjs/builders": "^0.12.0",
-    "@discordjs/rest": "^0.3.0",
     "axios": "^0.26.1",
     "csvtojson": "^2.0.10",
     "discord-api-types": "^0.31.0",
-    "discord.js": "^13.8.0",
-    "dotenv": "^16.0.0",
+    "discord.js": "^14.6.0",
+    "dotenv": "^16.0.3",
     "emoji-dictionary": "^1.0.11",
     "express": "^4.18.2",
     "firebase-admin": "^10.0.2",
@@ -25,8 +23,8 @@
     "@types/node-cron": "^3.0.1",
     "onchange": "^7.1.0",
     "prettier": "^2.6.2",
-    "ts-node": "^10.7.0",
-    "ts-node-dev": "^1.1.8",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^4.6.3"
   },
   "scripts": {

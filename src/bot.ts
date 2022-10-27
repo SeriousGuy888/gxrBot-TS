@@ -1,18 +1,27 @@
-import "./config"
-import { Intents } from "discord.js"
+import "./config"             // Set up and make sure all the env variables are there
+import "./firebase/firebase"  // Connect to Firebase, and start updating karma
+
+import cron from "node-cron"    
+import express from "express"
+import { IntentsBitField, Partials } from "discord.js"
+import { ActivityType } from "discord-api-types/v10"
+import { onShutdown } from "node-graceful-shutdown"
+
 import Client from "./ExtendedClient"
 import deployCommands from "./deployCommands"
 import deployEvents from "./deployEvents"
-import "./firebase/firebase"
+
 import { writeKarmaChanges } from "./firebase/karmaDb"
-import { onShutdown } from "node-graceful-shutdown"
-import cron from "node-cron"
 import { sendBirthdayReminders } from "./util/birthdayReminder"
-import express from "express"
+
 
 export const client = new Client({
-  partials: ["MESSAGE", "CHANNEL", "REACTION"],
-  intents: new Intents(32767),
+  partials: [
+    Partials.Message,
+    Partials.Channel,
+    Partials.Reaction,
+  ],
+  intents: new IntentsBitField(32767),
 })
 
 client.once("ready", async () => {
@@ -22,7 +31,7 @@ client.once("ready", async () => {
     activities: [
       {
         name: "the karma race",
-        type: "COMPETING",
+        type: ActivityType.Competing,
       },
     ],
   })

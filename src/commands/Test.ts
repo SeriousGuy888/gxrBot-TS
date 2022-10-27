@@ -1,5 +1,4 @@
-import { SlashCommandBuilder } from "@discordjs/builders"
-import { CommandInteraction } from "discord.js"
+import { CommandInteraction, SlashCommandBuilder } from "discord.js"
 import { getBirthdayEmbed } from "../util/birthdayReminder"
 import { Command } from "../interfaces"
 
@@ -12,7 +11,10 @@ async function execute(interaction: CommandInteraction) {
   }
 
   const embed = getBirthdayEmbed(new Date())
-  if (!embed) return
+  if (!embed) {
+    interaction.followUp("Oeuf")
+    return
+  }
   await interaction.followUp({ embeds: [embed] })
 }
 

@@ -11,7 +11,7 @@ export default async function () {
     commands.push(command.data)
   }
 
-  const rest = new REST({ version: "9" }).setToken(
+  const rest = new REST({ version: "10" }).setToken(
     process.env.BOT_TOKEN as string,
   )
 

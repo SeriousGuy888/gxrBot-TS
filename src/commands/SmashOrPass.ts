@@ -1,15 +1,18 @@
-import { SlashCommandBuilder } from "@discordjs/builders"
 import {
   Collection,
   CommandInteraction,
   GuildMember,
   Interaction,
-  InteractionReplyOptions,
   Message,
-  MessageActionRow,
-  MessageButton,
-  MessageEmbed,
+  ActionRowBuilder,
+  ButtonBuilder,
+  EmbedBuilder,
   Snowflake,
+  SlashCommandBuilder,
+  ComponentType,
+  ButtonStyle,
+  Colors,
+  ChatInputCommandInteraction,
 } from "discord.js"
 import { Command } from "src/interfaces"
 
@@ -25,7 +28,7 @@ interface GameState {
   message?: Message
 }
 
-async function execute(interaction: CommandInteraction) {
+async function execute(interaction: ChatInputCommandInteraction) {
   if (!interaction.guild) {
     interaction.followUp("This command cannot be used outside of a guild.")
     return
@@ -49,17 +52,22 @@ const nextTurn = async (
   const currentPerson = gameOver ? undefined : pickNextPerson(gameState)
 
   const messagePayload = buildReply(gameState, currentPerson)
-  if (!gameState.message)
-    gameState.message = (await interaction.followUp(messagePayload)) as Message
-  else
-    gameState.message = (await interaction.editReply(messagePayload)) as Message
+  if (!gameState.message) {
+    gameState.message = await interaction.followUp(messagePayload)
+  } else {
+    gameState.message = await interaction.editReply(messagePayload)
+  }
 
   if (!gameState.message) return
   if (!currentPerson) return
 
   const filter = (inter: Interaction) => interaction.user.id === inter.user.id
   gameState.message
-    .awaitMessageComponent({ filter, componentType: "BUTTON", time: 45_000 })
+    .awaitMessageComponent({
+      filter,
+      componentType: ComponentType.Button,
+      time: 45_000,
+    })
     .catch(async () => {
       await nextTurn(gameState, interaction, true)
     })
@@ -87,49 +95,61 @@ const nextTurn = async (
 const buildReply = (
   gameState: GameState,
   currentPerson: GuildMember | undefined,
-): InteractionReplyOptions => {
-  let components: MessageActionRow[] = []
+): any => {
+  let components: ActionRowBuilder[] = []
 
-  const embed = new MessageEmbed().setTitle("Smash or Pass").setColor("PURPLE")
+  const embed = new EmbedBuilder()
+    .setTitle("Smash or Pass")
+    .setColor(Colors.Purple)
 
   if (currentPerson) {
     embed
       .setDescription(currentPerson.toString())
-      .addField("\u200b", "\u200b")
-      .addField("🔨 Smashes", gameState.smashedIds.length.toString(), true)
-      .addField("🛂 Passes", gameState.passedIds.length.toString(), true)
+      .addFields([
+        { name: "\u200b", value: "\u200b" },
+        {
+          name: "🔨 Smashes",
+          value: gameState.smashedIds.length.toString(),
+          inline: true,
+        },
+        {
+          name: "🛂 Passes",
+          value: gameState.passedIds.length.toString(),
+          inline: true,
+        },
+      ])
       .setFooter({ text: `${gameState.yetPickedColl.size} people remaining` })
 
     components = [
-      new MessageActionRow().addComponents(
-        new MessageButton()
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
           .setCustomId("smash")
           .setLabel("Smash")
-          .setStyle("PRIMARY"),
-        new MessageButton()
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
           .setCustomId("pass")
           .setLabel("Pass")
-          .setStyle("PRIMARY"),
-        new MessageButton()
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
           .setCustomId("exit")
           .setLabel("End Game")
-          .setStyle("SECONDARY"),
+          .setStyle(ButtonStyle.Secondary),
       ),
     ]
   } else {
     const { smashedIds, passedIds } = gameState
-    embed
-      .setDescription("Game Ended")
-      .addField(
-        `🔨 People Smashed (${smashedIds.length})`,
-        mentionIds(smashedIds),
-        true,
-      )
-      .addField(
-        `🛂 People Passed (${passedIds.length})`,
-        mentionIds(passedIds),
-        true,
-      )
+    embed.setDescription("Game Ended").addFields(
+      {
+        name: `🔨 People Smashed (${smashedIds.length})`,
+        value: mentionIds(smashedIds),
+        inline: true,
+      },
+      {
+        name: `🛂 People Passed (${passedIds.length})`,
+        value: mentionIds(passedIds),
+        inline: true,
+      },
+    )
   }
 
   return {

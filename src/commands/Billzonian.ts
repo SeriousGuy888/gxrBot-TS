@@ -1,11 +1,14 @@
-import { SlashCommandBuilder } from "@discordjs/builders"
 import {
-  CommandInteraction,
   Message,
-  MessageActionRow,
-  MessageButton,
+  ActionRowBuilder,
+  ButtonBuilder,
   MessageComponentInteraction,
-  MessageEmbed,
+  EmbedBuilder,
+  SlashCommandBuilder,
+  ButtonStyle,
+  APIEmbedField,
+  MessagePayload,
+  ChatInputCommandInteraction,
 } from "discord.js"
 import axios from "axios"
 import csv from "csvtojson"
@@ -24,7 +27,7 @@ const data = new SlashCommandBuilder()
       .setDescription("Search term - Billzonian or English word"),
   )
 
-async function execute(interaction: CommandInteraction) {
+async function execute(interaction: ChatInputCommandInteraction) {
   let response
   try {
     response = await axios.get(dictionaryUrl)
@@ -38,9 +41,9 @@ async function execute(interaction: CommandInteraction) {
   const searchTerm = interaction.options.getString("word")?.toLowerCase()
   let maxPages = Math.ceil(dictionaryData.length / itemsPerPage)
   let page = 1
-  let msg = (await interaction.followUp({
+  let msg = await interaction.followUp({
     content: "Loading dictionary...",
-  })) as Message
+  })
 
   const displayDictionary = async (
     targetMessage: Message,
@@ -50,7 +53,7 @@ async function execute(interaction: CommandInteraction) {
 
     maxPages = Math.ceil(searchResults.length / itemsPerPage)
 
-    const responseEmbed = new MessageEmbed()
+    const responseEmbed = new EmbedBuilder()
       .setColor("#fca503")
       .setTitle("The Billzonian-English Dictionary")
       .setURL(dictionaryUrl)
@@ -66,15 +69,16 @@ async function execute(interaction: CommandInteraction) {
       )
 
     if (maxPages === 0) {
-      responseEmbed
-        .addField(
-          "No Words Found :(",
-          [
+      responseEmbed.addFields(
+        {
+          name: "No Words Found :(",
+          value: [
             "Try double checking your search term.",
             "Shu attempt tu reakratise thy search term.",
           ].join("\n"),
-        )
-        .addField("\u200b", "\u200b")
+        },
+        { name: "\u200b", value: "\u200b" },
+      )
       // todo: implement similar word matching
 
       return targetMessage.edit({
@@ -94,71 +98,78 @@ async function execute(interaction: CommandInteraction) {
       }
     })
 
+    let wordFields: APIEmbedField[] = []
     for (let i = 0; i < Math.min(itemsPerPage, searchResults.length); i++) {
       const entryIndex = i + (page - 1) * itemsPerPage
       const wordData = searchResults[entryIndex]
 
-      addWordToEmbed(wordData, responseEmbed)
+      wordFields.push({
+        name: "",
+        value: "",
+      })
+
+      wordFields.push(formatWordData(wordData))
     }
-    responseEmbed.addField("\u200b", "\u200b")
+    responseEmbed.addFields(wordFields)
+    responseEmbed.addFields({ name: "\u200b", value: "\u200b" })
 
     const buttonRows = [
-      new MessageActionRow().addComponents(
-        new MessageButton()
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
           .setCustomId("first")
           .setLabel("First")
-          .setStyle("SECONDARY")
+          .setStyle(ButtonStyle.Secondary)
           .setDisabled(page <= 1),
-        new MessageButton()
+        new ButtonBuilder()
           .setCustomId("prev")
           .setLabel("<")
-          .setStyle("PRIMARY")
+          .setStyle(ButtonStyle.Primary)
           .setDisabled(page <= 1),
-        new MessageButton()
+        new ButtonBuilder()
           .setCustomId("next")
           .setLabel(">")
-          .setStyle("PRIMARY")
+          .setStyle(ButtonStyle.Primary)
           .setDisabled(page >= maxPages),
-        new MessageButton()
+        new ButtonBuilder()
           .setCustomId("last")
           .setLabel("Last")
-          .setStyle("SECONDARY")
+          .setStyle(ButtonStyle.Secondary)
           .setDisabled(page >= maxPages),
       ),
-      new MessageActionRow().addComponents(
-        new MessageButton()
+      new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
           .setCustomId("prev10")
           .setLabel("< 10")
-          .setStyle("SECONDARY")
+          .setStyle(ButtonStyle.Secondary)
           .setDisabled(page <= 10),
-        new MessageButton()
+        new ButtonBuilder()
           .setCustomId("prev3")
           .setLabel("< 3")
-          .setStyle("SECONDARY")
+          .setStyle(ButtonStyle.Secondary)
           .setDisabled(page <= 3),
-        new MessageButton()
+        new ButtonBuilder()
           .setCustomId("next3")
           .setLabel("3 >")
-          .setStyle("SECONDARY")
+          .setStyle(ButtonStyle.Secondary)
           .setDisabled(page >= maxPages - 3),
-        new MessageButton()
+        new ButtonBuilder()
           .setCustomId("next10")
           .setLabel("10 >")
-          .setStyle("SECONDARY")
+          .setStyle(ButtonStyle.Secondary)
           .setDisabled(page >= maxPages - 10),
       ),
     ]
     if (disableButtons) {
       buttonRows.forEach((row) => {
-        row.components.forEach((comp) => comp.setDisabled(true))
+        row.components.forEach((comp) =>
+          (comp as ButtonBuilder).setDisabled(true),
+        )
       })
     }
 
-    return targetMessage.edit({
-      content: null,
-      embeds: [responseEmbed],
-      components: buttonRows,
-    })
+    return targetMessage.edit(new MessagePayload(targetMessage.channel, {
+      content: " ",
+    }))
   }
 
   msg = await displayDictionary(msg, false)
@@ -224,8 +235,14 @@ const searchDictionaryData = (
   )
 }
 
-const addWordToEmbed = (wordData: any, embed: MessageEmbed) => {
-  if (!wordData) return
+const formatWordData = (wordData: any): APIEmbedField => {
+  if (!wordData) {
+    return {
+      name: "Error",
+      value: "No Data",
+      inline: true,
+    }
+  }
 
   const ipaReadings = wordData.ipa.split("|")
   const alts = wordData.alt_forms.split("|")
@@ -242,11 +259,11 @@ const addWordToEmbed = (wordData: any, embed: MessageEmbed) => {
       .join(" or ")
   }
 
-  embed.addField(
-    `${wordData.word && "**" + wordData.word + "**"} \`${wordData.pos}\`${
+  return {
+    name: `${wordData.word && "**" + wordData.word + "**"} \`${wordData.pos}\`${
       wordData.isExactMatch ? " ⭐" : ""
     }`,
-    [
+    value: [
       ipaReadingsString,
       wordData.alt_forms && `\`Alt:\` ${alts.join(", ")}`,
       listify(translation, "numbers"),
@@ -255,8 +272,8 @@ const addWordToEmbed = (wordData: any, embed: MessageEmbed) => {
     ]
       .filter((e) => e)
       .join("\n"),
-    true,
-  )
+    inline: true,
+  }
 }
 
 const listify = (

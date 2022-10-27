@@ -1,5 +1,9 @@
-import { SlashCommandBuilder } from "@discordjs/builders"
-import { CommandInteraction, MessageEmbed } from "discord.js"
+import {
+  ChatInputCommandInteraction,
+  Colors,
+  EmbedBuilder,
+  SlashCommandBuilder,
+} from "discord.js"
 import { getKarma } from "../firebase/karmaDb"
 import { Command } from "../interfaces"
 
@@ -13,12 +17,12 @@ const data = new SlashCommandBuilder()
       .setRequired(false)
   })
 
-async function execute(interaction: CommandInteraction) {
+async function execute(interaction: ChatInputCommandInteraction) {
   const user = interaction.options.getUser("user") ?? interaction.user
 
   const karma = await getKarma(user.id)
-  const embed = new MessageEmbed()
-    .setColor("FUCHSIA")
+  const embed = new EmbedBuilder()
+    .setColor(Colors.Fuchsia)
     .setTitle(`${user.tag}'s Karma`)
     .setDescription(`✨ ${karma}`)
 
