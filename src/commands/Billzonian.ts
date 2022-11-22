@@ -82,7 +82,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
       // todo: implement similar word matching
 
       return targetMessage.edit({
-        content: null,
+        content: "\u200b",
         embeds: [responseEmbed],
       })
     }
@@ -103,18 +103,14 @@ async function execute(interaction: ChatInputCommandInteraction) {
       const entryIndex = i + (page - 1) * itemsPerPage
       const wordData = searchResults[entryIndex]
 
-      wordFields.push({
-        name: "",
-        value: "",
-      })
-
       wordFields.push(formatWordData(wordData))
     }
+    
     responseEmbed.addFields(wordFields)
     responseEmbed.addFields({ name: "\u200b", value: "\u200b" })
 
     const buttonRows = [
-      new ActionRowBuilder().addComponents(
+      new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
           .setCustomId("first")
           .setLabel("First")
@@ -136,7 +132,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
           .setStyle(ButtonStyle.Secondary)
           .setDisabled(page >= maxPages),
       ),
-      new ActionRowBuilder().addComponents(
+      new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder()
           .setCustomId("prev10")
           .setLabel("< 10")
@@ -161,15 +157,17 @@ async function execute(interaction: ChatInputCommandInteraction) {
     ]
     if (disableButtons) {
       buttonRows.forEach((row) => {
-        row.components.forEach((comp) =>
-          (comp as ButtonBuilder).setDisabled(true),
-        )
+        row.components.forEach((comp) => comp.setDisabled(true))
       })
     }
 
-    return targetMessage.edit(new MessagePayload(targetMessage.channel, {
-      content: " ",
-    }))
+    return targetMessage.edit(
+      new MessagePayload(targetMessage.channel, {
+        content: "\u200b",
+        embeds: [responseEmbed],
+        components: buttonRows,
+      }),
+    )
   }
 
   msg = await displayDictionary(msg, false)
