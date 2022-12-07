@@ -263,10 +263,11 @@ const formatWordData = (wordData: any): APIEmbedField => {
     }`,
     value: [
       ipaReadingsString,
-      wordData.alt_forms && `\`Alt:\` ${alts.join(", ")}`,
       listify(translation, "numbers"),
       listify(example, "letters"),
+      "",
       listify(notes, "bullets"),
+      wordData.alt_forms && `\`Alt:\` ${alts.join(", ")}`,
     ]
       .filter((e) => e)
       .join("\n"),
@@ -293,7 +294,7 @@ const listify = (
         bullet = "`" + letters.charAt(i % letters.length) + ".`"
         break
       case "bullets":
-        bullet = "`•`"
+        bullet = "•"
         break
     }
 
