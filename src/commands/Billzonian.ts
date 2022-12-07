@@ -265,7 +265,7 @@ const formatWordData = (wordData: any): APIEmbedField => {
       ipaReadingsString,
       listify(translation, "numbers"),
       listify(example, "letters"),
-      "",
+      "-",
       listify(notes, "bullets"),
       wordData.alt_forms && `\`Alt:\` ${alts.join(", ")}`,
     ]
