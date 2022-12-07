@@ -30,7 +30,7 @@ client.once("ready", async () => {
     status: "online",
     activities: [
       {
-        name: "the karma race",
+        name: "the World Cup rn",
         type: ActivityType.Competing,
       },
     ],
