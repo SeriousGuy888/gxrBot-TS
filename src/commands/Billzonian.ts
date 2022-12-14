@@ -14,6 +14,8 @@ import axios from "axios"
 import csv from "csvtojson"
 import { Command } from "../interfaces"
 import { didYouMean } from "../util/similarStringFinder"
+import { formatAsList } from "../util/stringFormatter"
+import { moveArrayItem } from "../util/arrayHelper"
 
 const repoUrl = "https://github.com/SeriousGuy888/Billzonian"
 const dictionaryUrl =
@@ -247,13 +249,13 @@ const formatWordData = (wordData: any): APIEmbedField => {
 
   const ipaReadings = wordData.ipa.split("|")
   const alts = wordData.alt_forms.split("|")
-  const translation = wordData.translation
-  const example = wordData.example
-  const notes = wordData.notes
+  const translation = wordData.translation.replace(/\|/g, "\n")
+  const example = wordData.example.replace(/\|/g, "\n")
+  const notes = wordData.notes.replace(/\|/g, "\n")
 
-  let ipaReadingsString = "No IPA transcription provided."
+  let ipaLinks = "No IPA transcription provided."
   if (wordData.ipa) {
-    ipaReadingsString = ipaReadings
+    ipaLinks = ipaReadings
       .map(
         (e: string) => `/[${e}](http://ipa-reader.xyz/?text=${encodeURI(e)})/`,
       )
@@ -265,52 +267,18 @@ const formatWordData = (wordData: any): APIEmbedField => {
       wordData.isExactMatch ? " ⭐" : ""
     }`,
     value: [
-      ipaReadingsString,
-      listify(translation, "numbers"),
-      listify(example, "letters"),
-      "-",
-      listify(notes, "bullets"),
+      ipaLinks,
+      "\u200b",
+      formatAsList(translation, "numbers"),
+      formatAsList(example, "letters"),
+      "\u200b",
+      formatAsList(notes, "bullets"),
       wordData.alt_forms && `\`Alt:\` ${alts.join(", ")}`,
     ]
       .filter((e) => e)
       .join("\n"),
     inline: true,
   }
-}
-
-const listify = (
-  str: string,
-  startLineWith: "numbers" | "letters" | "bullets",
-) => {
-  if (!str) return ""
-
-  const lines = str.split("|")
-  const numberedLines = []
-  const letters = "abcdefghijklmnopqrstuvwxyz"
-  for (let i = 0; i < lines.length; i++) {
-    let bullet
-    switch (startLineWith) {
-      case "numbers":
-        bullet = `\`${(i + 1).toString() + "."}\``
-        break
-      case "letters":
-        bullet = "`" + letters.charAt(i % letters.length) + ".`"
-        break
-      case "bullets":
-        bullet = "•"
-        break
-    }
-
-    numberedLines.push(`${bullet} ${lines[i]}`)
-  }
-
-  return numberedLines.join("\n")
-}
-
-const moveArrayItem = (array: any[], fromIndex: number, toIndex: number) => {
-  const arr = [...array]
-  arr.splice(toIndex, 0, ...arr.splice(fromIndex, 1))
-  return arr
 }
 
 export const Billzonian = { data, execute } as Command
