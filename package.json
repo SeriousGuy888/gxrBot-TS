@@ -4,6 +4,7 @@
   "description": "gxrBot but rewritten in typescript",
   "main": "src/bot.ts",
   "dependencies": {
+    "@types/string-similarity": "^4.0.0",
     "axios": "^0.26.1",
     "csvtojson": "^2.0.10",
     "discord-api-types": "^0.31.0",
@@ -16,7 +17,8 @@
     "node-cache": "^5.1.2",
     "node-cron": "^3.0.0",
     "node-graceful-shutdown": "^1.1.2",
-    "pretty-ms": "^7.0.1"
+    "pretty-ms": "^7.0.1",
+    "string-similarity": "^4.0.4"
   },
   "devDependencies": {
     "@types/node": "^17.0.23",

@@ -13,6 +13,7 @@ import {
 import axios from "axios"
 import csv from "csvtojson"
 import { Command } from "../interfaces"
+import { didYouMean } from "../util/similarStringFinder"
 
 const repoUrl = "https://github.com/SeriousGuy888/Billzonian"
 const dictionaryUrl =
@@ -69,17 +70,19 @@ async function execute(interaction: ChatInputCommandInteraction) {
       )
 
     if (maxPages === 0) {
+      const similarWords = didYouMean(
+        searchTerm ?? "",
+        dictionaryData.map((e) => e.word),
+        10,
+      )
+
       responseEmbed.addFields(
         {
-          name: "No Words Found :(",
-          value: [
-            "Try double checking your search term.",
-            "Shu attempt tu reakratise thy search term.",
-          ].join("\n"),
+          name: "No words found! Did you mean...",
+          value: similarWords.join("\n"),
         },
         { name: "\u200b", value: "\u200b" },
       )
-      // todo: implement similar word matching
 
       return targetMessage.edit({
         content: "\u200b",
@@ -105,7 +108,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
       wordFields.push(formatWordData(wordData))
     }
-    
+
     responseEmbed.addFields(wordFields)
     responseEmbed.addFields({ name: "\u200b", value: "\u200b" })
 
