@@ -35,7 +35,7 @@ interface Entry {
 }
 
 async function execute(interaction: ChatInputCommandInteraction) {
-  const searchTerm = interaction.options.getString("word")?.toLowerCase()
+  const searchTerm = interaction.options.getString("search_term")?.toLowerCase()
 
   let response: ApiResponse = { results: {} }
   await fetch(apiUrl + searchTerm)
@@ -290,8 +290,8 @@ export const Billzonian = {
     .setDescription("Look up a word in the Billzonian dictionary")
     .addStringOption((option) =>
       option
-        .setName("word")
-        .setDescription("Search term - Billzonian or English word")
+        .setName("search_term")
+        .setDescription("Search term - Billzonian word or its English translation")
         .setRequired(true),
     ),
   execute,
