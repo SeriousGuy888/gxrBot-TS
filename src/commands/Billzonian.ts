@@ -10,16 +10,28 @@ import {
   MessagePayload,
   ChatInputCommandInteraction,
 } from "discord.js"
-import axios from "axios"
-import csv from "csvtojson"
 import { Command } from "../interfaces"
-import { didYouMean } from "../util/similarStringFinder"
 import { formatAsList } from "../util/stringFormatter"
-import { moveArrayItem } from "../util/arrayHelper"
+import { fetch } from "undici"
 
-const repoUrl = "https://github.com/SeriousGuy888/Billzonian"
-const dictionaryUrl =
-  "https://seriousguy888.github.io/Billzonian/vocabulary.csv"
+const siteUrl = "https://billzonian.vercel.app/"
+const apiUrl = "https://billzonian.vercel.app/api/words/search?q="
+const itemsPerPage = 6
+
+interface ApiResponse {
+  results: {
+    [word: string]: Entry[]
+  }
+  similarWords?: string[]
+}
+interface Entry {
+  partOfSpeech: string
+  pronunciations: string[]
+  glosses: string[]
+  examples: string[]
+  notes: string[]
+  alternateForms: string[]
+}
 
 const data = new SlashCommandBuilder()
   .setName("billzonian")
@@ -27,92 +39,90 @@ const data = new SlashCommandBuilder()
   .addStringOption((option) =>
     option
       .setName("word")
-      .setDescription("Search term - Billzonian or English word"),
+      .setDescription("Search term - Billzonian or English word")
+      .setRequired(true),
   )
 
 async function execute(interaction: ChatInputCommandInteraction) {
-  let response
-  try {
-    response = await axios.get(dictionaryUrl)
-  } catch (error) {
-    interaction.followUp({ content: "Could not fetch dictionary data." })
-    return
-  }
-
-  const dictionaryData = await csv().fromString(response.data)
-  const itemsPerPage = 3
   const searchTerm = interaction.options.getString("word")?.toLowerCase()
-  let maxPages = Math.ceil(dictionaryData.length / itemsPerPage)
-  let page = 1
+
+  let response: ApiResponse = { results: {} }
+  await fetch(apiUrl + searchTerm)
+    .then((data) => data.json())
+    .then((data) => (response = data as ApiResponse))
+    .catch((err) => {
+      interaction.followUp({
+        content: `Failed to fetch dictionary data.\nTry again later or visit ${siteUrl}`,
+      })
+      console.error(err)
+    })
+
+  const dictionaryData = response.results
+  const wordCount = Object.keys(dictionaryData).length
+
+  const embed = new EmbedBuilder()
+    .setColor("#fca503")
+    .setTitle("The Billzonian-English Dictionary")
+    .setURL(siteUrl)
+    .setDescription(
+      [
+        `Billzonian dictionary also accessible on [the site](${siteUrl}).`,
+        "",
+        `:mag: Search Term: \`${searchTerm || "[None]"}\``,
+        "\u200b",
+      ].join("\n"),
+    )
+
   let msg = await interaction.followUp({
     content: "Loading dictionary...",
   })
+
+  if (wordCount === 0) {
+    if (response.similarWords?.length) {
+      embed.addFields(
+        {
+          name: "No results. Did you mean...",
+          value: response.similarWords.join("\n"),
+        },
+        { name: "\u200b", value: "\u200b" },
+      )
+    } else {
+      embed.addFields({
+        name: "No results.",
+        value: "\u200b",
+      })
+    }
+
+    msg.edit({
+      content: "\u200b",
+      embeds: [embed],
+    })
+
+    return
+  }
+
+  let maxPages = Math.ceil(wordCount / itemsPerPage)
+  let page = 1
 
   const displayDictionary = async (
     targetMessage: Message,
     disableButtons: boolean,
   ) => {
-    let searchResults = searchDictionaryData(dictionaryData, searchTerm)
+    maxPages = Math.ceil(wordCount / itemsPerPage)
 
-    maxPages = Math.ceil(searchResults.length / itemsPerPage)
-
-    const responseEmbed = new EmbedBuilder()
-      .setColor("#fca503")
-      .setTitle("The Billzonian-English Dictionary")
-      .setURL(dictionaryUrl)
-      .setFooter({ text: `Page ${page} of ${maxPages}` })
-      .setDescription(
-        [
-          "This dictionary is not necessarily a comprehensive collection.",
-          `If a word is missing, you can [make an issue here.](${repoUrl})`,
-          "",
-          `:mag: Search Term: \`${searchTerm || "[None]"}\``,
-          "\u200b",
-        ].join("\n"),
-      )
-
-    if (maxPages === 0) {
-      const similarWords = didYouMean(
-        searchTerm ?? "",
-        dictionaryData.map((e) => e.word),
-        10,
-      )
-
-      responseEmbed.addFields(
-        {
-          name: "No words found! Did you mean...",
-          value: similarWords.join("\n"),
-        },
-        { name: "\u200b", value: "\u200b" },
-      )
-
-      return targetMessage.edit({
-        content: "\u200b",
-        embeds: [responseEmbed],
-      })
-    }
-
-    searchResults.forEach((e) => {
-      if (e?.word?.toLowerCase() === searchTerm) {
-        e.isExactMatch = true
-        searchResults = moveArrayItem(
-          searchResults,
-          searchResults.indexOf(e),
-          0,
-        )
-      }
-    })
+    embed.setFooter({ text: `Page ${page} of ${maxPages}` }).setFields([])
 
     let wordFields: APIEmbedField[] = []
-    for (let i = 0; i < Math.min(itemsPerPage, searchResults.length); i++) {
-      const entryIndex = i + (page - 1) * itemsPerPage
-      const wordData = searchResults[entryIndex]
-
-      wordFields.push(formatWordData(wordData))
+    for (const word in dictionaryData) {
+      wordFields.push(...formatWordData(word, dictionaryData[word]))
     }
 
-    responseEmbed.addFields(wordFields)
-    responseEmbed.addFields({ name: "\u200b", value: "\u200b" })
+    const fieldIndexStart = (page - 1) * itemsPerPage
+    embed.addFields(
+      wordFields.slice(fieldIndexStart, fieldIndexStart + itemsPerPage),
+    )
+
+    embed.addFields({ name: "\u200b", value: "\u200b" })
 
     const buttonRows = [
       new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -169,7 +179,7 @@ async function execute(interaction: ChatInputCommandInteraction) {
     return targetMessage.edit(
       new MessagePayload(targetMessage.channel, {
         content: "\u200b",
-        embeds: [responseEmbed],
+        embeds: [embed],
         components: buttonRows,
       }),
     )
@@ -225,60 +235,56 @@ async function execute(interaction: ChatInputCommandInteraction) {
     })
 }
 
-const searchDictionaryData = (
-  dictionaryData: any[],
-  searchTerm: string | undefined,
-) => {
-  if (!searchTerm) return dictionaryData
-  return dictionaryData.filter(
-    (e) =>
-      e.word.toLowerCase().includes(searchTerm) ||
-      e.translation.toLowerCase().includes(searchTerm) ||
-      e.alt_forms.toLowerCase().includes(searchTerm),
-  )
-}
-
-const formatWordData = (wordData: any): APIEmbedField => {
-  if (!wordData) {
-    return {
-      name: "Error",
-      value: "No Data",
-      inline: true,
-    }
-  }
-
-  const ipaReadings = wordData.ipa.split("|")
-  const alts = wordData.alt_forms.split("|")
-  const translation = wordData.translation.replace(/\|/g, "\n")
-  const example = wordData.example.replace(/\|/g, "\n")
-  const notes = wordData.notes.replace(/\|/g, "\n")
-
-  let ipaLinks = "No IPA transcription provided."
-  if (wordData.ipa) {
-    ipaLinks = ipaReadings
-      .map(
-        (e: string) => `/[${e}](http://ipa-reader.xyz/?text=${encodeURI(e)})/`,
-      )
-      .join(" or ")
-  }
-
-  return {
-    name: `${wordData.word && "**" + wordData.word + "**"} \`${wordData.pos}\`${
-      wordData.isExactMatch ? " ⭐" : ""
-    }`,
-    value: [
-      ipaLinks,
-      "\u200b",
-      formatAsList(translation, "numbers"),
-      formatAsList(example, "letters"),
-      "\u200b",
-      formatAsList(notes, "bullets"),
-      wordData.alt_forms && `\`Alt:\` ${alts.join(", ")}`,
+const formatWordData = (word: string, entries: Entry[]): APIEmbedField[] => {
+  if (!entries) {
+    return [
+      {
+        name: "Error",
+        value: "No Data",
+        inline: true,
+      },
     ]
-      .filter((e) => e)
-      .join("\n"),
-    inline: true,
   }
+
+  const fields: APIEmbedField[] = []
+  entries.forEach((entry) => {
+    const {
+      alternateForms,
+      examples,
+      glosses,
+      notes,
+      partOfSpeech,
+      pronunciations,
+    } = entry
+
+    let ipaLinks = "No IPA transcription provided."
+    if (pronunciations) {
+      ipaLinks = pronunciations
+        .map(
+          (e: string) =>
+            `/[${e}](http://ipa-reader.xyz/?text=${encodeURI(e)})/`,
+        )
+        .join(" or ")
+    }
+
+    fields.push({
+      name: `**${word}** \`${partOfSpeech}\``,
+      value: [
+        ipaLinks,
+        "\u200b",
+        formatAsList(glosses, "numbers"),
+        formatAsList(examples, "letters"),
+        "\u200b",
+        formatAsList(notes, "bullets"),
+        alternateForms.length && `\`Alt:\` ${alternateForms.join(", ")}`,
+      ]
+        .filter((e) => e)
+        .join("\n"),
+      inline: true,
+    })
+  })
+
+  return fields
 }
 
 export const Billzonian = { data, execute } as Command
