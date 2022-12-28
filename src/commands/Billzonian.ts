@@ -19,10 +19,11 @@ const apiUrl = "https://billzonian.vercel.app/api/words/search?q="
 const itemsPerPage = 6
 
 interface ApiResponse {
-  results: {
-    [word: string]: Entry[]
-  }
+  results: DictionaryData
   similarWords?: string[]
+}
+interface DictionaryData {
+  [word: string]: Entry[]
 }
 interface Entry {
   partOfSpeech: string
@@ -32,16 +33,6 @@ interface Entry {
   notes: string[]
   alternateForms: string[]
 }
-
-const data = new SlashCommandBuilder()
-  .setName("billzonian")
-  .setDescription("Look up a word in the Billzonian dictionary")
-  .addStringOption((option) =>
-    option
-      .setName("word")
-      .setDescription("Search term - Billzonian or English word")
-      .setRequired(true),
-  )
 
 async function execute(interaction: ChatInputCommandInteraction) {
   const searchTerm = interaction.options.getString("word")?.toLowerCase()
@@ -101,91 +92,17 @@ async function execute(interaction: ChatInputCommandInteraction) {
     return
   }
 
-  let maxPages = Math.ceil(wordCount / itemsPerPage)
   let page = 1
+  let maxPages = Math.ceil(wordCount / itemsPerPage)
 
-  const displayDictionary = async (
-    targetMessage: Message,
-    disableButtons: boolean,
-  ) => {
-    maxPages = Math.ceil(wordCount / itemsPerPage)
-
-    embed.setFooter({ text: `Page ${page} of ${maxPages}` }).setFields([])
-
-    let wordFields: APIEmbedField[] = []
-    for (const word in dictionaryData) {
-      wordFields.push(...formatWordData(word, dictionaryData[word]))
-    }
-
-    const fieldIndexStart = (page - 1) * itemsPerPage
-    embed.addFields(
-      wordFields.slice(fieldIndexStart, fieldIndexStart + itemsPerPage),
-    )
-
-    embed.addFields({ name: "\u200b", value: "\u200b" })
-
-    const buttonRows = [
-      new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-          .setCustomId("first")
-          .setLabel("First")
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(page <= 1),
-        new ButtonBuilder()
-          .setCustomId("prev")
-          .setLabel("<")
-          .setStyle(ButtonStyle.Primary)
-          .setDisabled(page <= 1),
-        new ButtonBuilder()
-          .setCustomId("next")
-          .setLabel(">")
-          .setStyle(ButtonStyle.Primary)
-          .setDisabled(page >= maxPages),
-        new ButtonBuilder()
-          .setCustomId("last")
-          .setLabel("Last")
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(page >= maxPages),
-      ),
-      new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-          .setCustomId("prev10")
-          .setLabel("< 10")
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(page <= 10),
-        new ButtonBuilder()
-          .setCustomId("prev3")
-          .setLabel("< 3")
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(page <= 3),
-        new ButtonBuilder()
-          .setCustomId("next3")
-          .setLabel("3 >")
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(page >= maxPages - 3),
-        new ButtonBuilder()
-          .setCustomId("next10")
-          .setLabel("10 >")
-          .setStyle(ButtonStyle.Secondary)
-          .setDisabled(page >= maxPages - 10),
-      ),
-    ]
-    if (disableButtons) {
-      buttonRows.forEach((row) => {
-        row.components.forEach((comp) => comp.setDisabled(true))
-      })
-    }
-
-    return targetMessage.edit(
-      new MessagePayload(targetMessage.channel, {
-        content: "\u200b",
-        embeds: [embed],
-        components: buttonRows,
-      }),
-    )
-  }
-
-  msg = await displayDictionary(msg, false)
+  msg = await displayDictionary(
+    msg,
+    embed,
+    page,
+    maxPages,
+    dictionaryData,
+    false,
+  )
 
   const filter = (inter: MessageComponentInteraction) =>
     inter.user.id === interaction.user.id
@@ -224,18 +141,98 @@ async function execute(interaction: ChatInputCommandInteraction) {
 
       page = Math.max(Math.min(maxPages, page), 1)
 
-      inter.deferUpdate().catch(() => {
-        /* swallow error */
-      })
-      displayDictionary(msg, false)
+      inter.deferUpdate().catch(() => {})
+      displayDictionary(msg, embed, page, maxPages, dictionaryData, false)
     })
     .on("end", async () => {
       // if the timer expired, edit message and disable all buttons
-      displayDictionary(msg, true)
+      displayDictionary(msg, embed, page, maxPages, dictionaryData, true)
     })
 }
 
-const formatWordData = (word: string, entries: Entry[]): APIEmbedField[] => {
+const displayDictionary = async (
+  targetMessage: Message,
+  embed: EmbedBuilder,
+  page: number,
+  maxPages: number,
+  dictionaryData: DictionaryData,
+  disableButtons: boolean,
+) => {
+  embed.setFooter({ text: `Page ${page} of ${maxPages}` }).setFields([])
+
+  let wordFields: APIEmbedField[] = []
+  for (const word in dictionaryData) {
+    wordFields.push(...formatWordAsField(word, dictionaryData[word]))
+  }
+
+  const fieldIndexStart = (page - 1) * itemsPerPage
+  embed.addFields(
+    ...wordFields.slice(fieldIndexStart, fieldIndexStart + itemsPerPage),
+    { name: "\u200b", value: "\u200b" },
+  )
+
+  const buttonRows = [
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId("first")
+        .setLabel("First")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page <= 1),
+      new ButtonBuilder()
+        .setCustomId("prev")
+        .setLabel("<")
+        .setStyle(ButtonStyle.Primary)
+        .setDisabled(page <= 1),
+      new ButtonBuilder()
+        .setCustomId("next")
+        .setLabel(">")
+        .setStyle(ButtonStyle.Primary)
+        .setDisabled(page >= maxPages),
+      new ButtonBuilder()
+        .setCustomId("last")
+        .setLabel("Last")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page >= maxPages),
+    ),
+    new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId("prev10")
+        .setLabel("< 10")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page <= 10),
+      new ButtonBuilder()
+        .setCustomId("prev3")
+        .setLabel("< 3")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page <= 3),
+      new ButtonBuilder()
+        .setCustomId("next3")
+        .setLabel("3 >")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page >= maxPages - 3),
+      new ButtonBuilder()
+        .setCustomId("next10")
+        .setLabel("10 >")
+        .setStyle(ButtonStyle.Secondary)
+        .setDisabled(page >= maxPages - 10),
+    ),
+  ]
+  if (disableButtons) {
+    buttonRows.forEach((row) => {
+      row.components.forEach((comp) => comp.setDisabled(true))
+    })
+  }
+
+  return targetMessage.edit(
+    new MessagePayload(targetMessage.channel, {
+      content: "\u200b",
+      embeds: [embed],
+      components: buttonRows,
+    }),
+  )
+}
+
+const formatWordAsField = (word: string, entries: Entry[]): APIEmbedField[] => {
   if (!entries) {
     return [
       {
@@ -287,4 +284,15 @@ const formatWordData = (word: string, entries: Entry[]): APIEmbedField[] => {
   return fields
 }
 
-export const Billzonian = { data, execute } as Command
+export const Billzonian = {
+  data: new SlashCommandBuilder()
+    .setName("billzonian")
+    .setDescription("Look up a word in the Billzonian dictionary")
+    .addStringOption((option) =>
+      option
+        .setName("word")
+        .setDescription("Search term - Billzonian or English word")
+        .setRequired(true),
+    ),
+  execute,
+} as Command
