@@ -3,7 +3,10 @@ import cult from "../data/cult.json"
 
 export async function checkCultMessage(message: Message) {
   if (message.channel.id !== cult.channelId) return
-  if (message.content.toLowerCase() === cult.phrase.toLowerCase()) return
+
+  const msgContent = normaliseText(message.content)
+  const cultPhrase = normaliseText(cult.phrase)
+  if (msgContent === cultPhrase) return
 
   try {
     await message.delete()
@@ -16,4 +19,14 @@ export async function checkCultMessage(message: Message) {
         " your message. Try to be a better cult member next time.",
     )
   } catch (error) {}
+}
+
+/**
+ * Normalises text by removing diacritics and converting to lowercase.
+ */
+function normaliseText(str: string) {
+  return str
+    .toLowerCase()
+    .normalize("NFD") // https://stackoverflow.com/a/51874461
+    .replace(/\p{Diacritic}/gu, "")
 }
