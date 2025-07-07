@@ -40,6 +40,7 @@ async function sendReminderDms(embed: EmbedBuilder) {
   try {
     await sendDm("192833577883402240", msgOpts)
     await sendDm("323170410818437130", msgOpts)
+    await sendDm("636530890826055691", msgOpts)
   } catch (err) {
     console.log("Failed to send a birthday reminder DM!")
   }
