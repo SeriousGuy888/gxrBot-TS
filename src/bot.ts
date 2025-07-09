@@ -1,7 +1,7 @@
 import "./config" // Set up and make sure all the env variables are there
 import "./firebase/firebase" // Connect to Firebase, and start updating karma
 
-import cron from "node-cron"
+import cron, { TaskContext } from "node-cron"
 import express from "express"
 import { IntentsBitField, Partials } from "discord.js"
 import { ActivityType } from "discord-api-types/v10"
@@ -36,7 +36,8 @@ client.once("ready", async () => {
 
   cron.schedule(
     "0 0 * * *",
-    async (date) => {
+    async (taskContext: TaskContext) => {
+      const date = taskContext.date
       await sendBirthdayReminders(date)
     },
     { timezone: "America/Toronto" },
