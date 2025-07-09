@@ -4,7 +4,6 @@
   "description": "gxrBot but rewritten in typescript",
   "main": "src/bot.ts",
   "dependencies": {
-    "@types/string-similarity": "^4.0.0",
     "csvtojson": "^2.0.10",
     "discord-api-types": "^0.38.1",
     "discord.js": "^14.21.0",
