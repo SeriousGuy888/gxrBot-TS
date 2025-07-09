@@ -16,8 +16,8 @@ const data = new SlashCommandBuilder()
 
 async function execute(interaction: ChatInputCommandInteraction) {
   const topUsers = await getTopKarma(15)
-  const upvote = client.emojis.resolve(emojis.upvote) ?? emojis.upvote
-  const downvote = client.emojis.resolve(emojis.downvote) ?? emojis.downvote
+  const upvote = client.emojis.resolve(emojis.upvote) ?? "↑"
+  const downvote = client.emojis.resolve(emojis.downvote) ?? "↓"
 
   const embed = new EmbedBuilder()
     .setColor(Colors.Fuchsia)
