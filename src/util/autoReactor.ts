@@ -49,6 +49,7 @@ async function countingChannelReactions(message: Message) {
   if (content.endsWith("420")) await message.react("🍀")
   if (content.includes("69"))
     await multiReact(message, ["🇫", "🇺", "🇳", "🇲", "🇾"])
+  if (content.includes("67")) await message.react("🤲")
 
   // palindromes
   if (content.split("").reverse().join("") === content)
